@@ -1,0 +1,25 @@
+{
+    "servos": [
+        {
+            "id": 0,
+            "name": "Servo 0",
+            "position": 200,
+            "open_limit": 0,
+            "close_limit": 180
+        },
+        {
+            "id": 1,
+            "name": "Servo 1",
+            "position": 50,
+            "open_limit": 0,
+            "close_limit": 180
+        },
+        {
+            "id": 2,
+            "name": "Servo 2",
+            "position": 45,
+            "open_limit": 20,
+            "close_limit": 160
+        }
+    ]
+}

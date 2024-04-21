@@ -1,0 +1,4 @@
+fastapi
+uvicorn
+future
+adafruit-circuitpython-servokit

@@ -1,0 +1,36 @@
+{
+    "i2c_buses": [
+        {
+            "name": "dome",
+            "address": "0x40",
+            "scl_pin": "SCL",
+            "sda_pin": "SDA"
+        },
+        {
+            "name": "body",
+            "address": "0x41",
+            "scl_pin": "SCL",
+            "sda_pin": "SDA"
+        }
+    ],
+    "servos": [
+        {
+            "id": 0,
+            "name": "servo1",
+            "bus": "dome",
+            "position": 10
+        },
+        {
+            "id": 1,
+            "name": "servo2",
+            "bus": "dome",
+            "position": 120
+        },
+        {
+            "id": 0,
+            "name": "servo3",
+            "bus": "body",
+            "position": 120
+        }
+    ]
+}

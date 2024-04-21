@@ -1,0 +1,31 @@
+{
+    "pins": [
+        {
+            "id": 5,
+            "name": "Pin 1",
+            "type": "output"
+        },
+        {
+            "id": 6,
+            "name": "Pin 2",
+            "type": "output"
+        },
+        {
+            "id": 13,
+            "name": "Pin 3",
+            "type": "output"
+        },
+        {
+            "id": 19,
+            "name": "Pin 4",
+            "type": "output"
+        },
+        {
+            "id": 26,
+            "name": "Pin 5",
+            "type": "output"
+        }
+
+
+    ]
+}

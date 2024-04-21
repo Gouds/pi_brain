@@ -1,0 +1,472 @@
+
+* {
+    box-sizing: border-box
+}
+
+body, html {
+    padding: 0;
+    margin: 0;
+    height: 100%;
+}
+
+body {
+    background: black;
+    color: white;
+    font-family: sans-serif;
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+}
+
+body.raspberrypi-screen {
+    background: #000000;
+}
+
+.wrapper {
+/*    overflow: hidden;*/
+    display: flex;
+    flex-flow: wrap;
+    width: 800px;
+    height: 400px;
+}
+
+/*.flexrow {
+    flex-direction: row;
+    min-height: 1.25rem;
+}
+*/
+
+a:link {
+    text-decoration: none;
+    color: white;
+}
+a:active {
+    text-decoration: none;
+    color: white;
+}
+a:hover {
+    text-decoration: none;
+    color: white;
+}
+a:focus {
+    text-decoration: none;
+    color: white;
+}
+a:visited {
+    text-decoration: none;
+    color: white;
+}
+
+
+/*******************
+*    HEADER
+*******************/
+
+header {
+    width: 800px;
+    height: 60px;
+    display: flex;
+    flex-flow: row;
+    flex-wrap: nowrap;
+}
+
+header a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    padding: 6px;
+}
+
+header h1 {
+    font-size: 1.75rem;
+    font-weight: bold;
+    text-align: center;
+    line-height: 60px;
+    padding: 0 0 0 0;
+    margin: 0;
+}
+
+.header {
+    width: 60%;
+    border: none;
+    color: white;
+}
+
+.leftheader {
+    width: 20%;
+    display: inline-flex;
+    font-family: sans-serif;
+}
+
+.rightheader {
+    width: 20%;
+    display: inline-flex;
+    font-family: sans-serif;
+}
+
+.raspberrypi-screen header {
+    background: #000000;
+    border: 1px solid #ffffff;
+    font-family: sans-serif;
+    text-transform: capitalize;
+}
+
+
+/*******************
+*  CONTENT WRAPPER
+*******************/
+
+.contentwrapper {
+    width: 800px;
+    height: 300px;
+    display: flex;
+    flex-flow: row;
+}
+
+/*******************
+*  FOOTER WRAPPER
+*******************/
+
+footer {
+    display: flex;
+    flex-flow: row;
+}
+
+.footer {
+    width: 800px;
+    height: 40px;
+    background: black;
+    border: none;
+    color: white;
+    font-family: sans-serif;
+    font-size: 12;
+    text-align: center;
+}
+
+.raspberrypi-screen .footer {
+    background: #000000;
+    border: 1px solid #ffffff;
+    color: white;
+}
+
+
+/*******************
+*  MENU
+*******************/
+
+
+sidemenu {
+    width: 200px;
+    color: white;
+    border: none;
+    font-family: sans-serif;
+    font-size: 12;
+    flex-direction: column;
+    position: relative;
+}
+
+#leftsidemenu {
+    display: none;
+    text-align: left;
+     transition: 0.6s;
+}
+#rightsidemenu {
+    display: none;
+    text-align: right;
+    transition: 0.6s;
+}
+#leftsidemenu.show {
+    display: flex;
+    text-align: left;
+    margin-left: 0;
+    transition: 0.6s;
+}
+#rightsidemenu.show {
+    display: flex;
+    text-align: right;
+    margin-right: 0;
+    transition: 0.6s;
+}
+#leftsidemenu a {
+    padding: 0 0 0 1.25rem;
+}
+#rightsidemenu a {
+    padding: 0 1.25rem 0 0;
+}
+sidemenu .bottommenu {
+    bottom: 0;
+    position: absolute;
+}
+
+.raspberrypi-screen sidemenu {
+    background: #55575c;
+    color: white;
+    border-left: 1px solid #ffffff;
+    border-right: 1px solid #ffffff;
+}
+
+sidemenu ul {
+    padding: 0;
+    margin: 0;
+    list-style: none;
+}
+
+sidemenu li {
+    width: 100%;
+    display: inline-block;
+}
+
+sidemenu a {
+    width: 100%;
+    display: block;
+    text-decoration: none;
+    line-height: 30px;
+    height: inherit;
+}
+
+.raspberrypi-screen sidemenu .topmenu li {
+    border-bottom: 1px solid #ffffff;
+}
+.braspberrypi-screen sidemenu a:after {
+    content: "";
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    background-size: 22px 22px;
+    background-repeat: no-repeat;
+}
+
+.raspberrypi-screen sidemenu .bottommenu li {
+    border-top: 1px solid #ffffff;
+}
+.raspberrypi-screen sidemenu a, .raspberrypi-screen sidemenu a:active, .raspberrypi-screen sidemenu a:hover, .raspberrypi-screen sidemenu a:focus, .raspberrypi-screen sidemenu a:visited {
+    position: relative;
+    background: black;
+}
+
+
+.content {
+    width: 100%;
+     display: flex;
+    flex-direction: column;
+}
+
+
+
+
+/*******************
+*  DOME
+*******************/
+
+.servowrapper, .audiowrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+}
+
+.diagram {
+    flex-direction: column;
+    width: 300px;
+}
+
+.table {
+    width: 100%;
+    display: block;
+    margin: 1rem;
+    flex-direction: column;
+}
+
+.table table {
+    width: 100%;
+    text-align: center;
+    border-collapse: collapse;
+}
+
+.raspberrypi-screen .table table {
+    background: black;
+    border: 1px solid #ffffff;
+}
+
+.table th {
+    padding: .5rem;
+}
+
+.raspberrypi-screen .table th {
+    background: #0D1014;
+    border: 1px solid #ffffff;
+}
+.raspberrypi-screen .table tr:nth-child(even) {
+    background: #1b2129;
+}
+
+
+.table td {
+    padding: .5rem;
+    text-align: left;
+}
+
+.table td a {
+    display: block;
+    padding: .75rem;
+    text-align: center;
+}
+
+.table td a.open {
+    display: block;
+    padding: .75rem;
+    text-align: center;
+    background: #5C9918;
+}
+
+.table td a.close {
+    display: block;
+    padding: .75rem;
+    text-align: center;
+    background: #770000;
+}
+
+/*
+.items {
+    display: flex;
+    flex-flow: column;
+}
+
+h3.current, h3.avail {
+    font-size: 10px;
+    font-weight: normal;
+    line-height: 30px;
+    padding: 1rem 1rem 0;
+    margin: 0;
+}
+
+.items .current {
+    flex: 1 0;
+    background: black;
+    border: 1px solid #333;
+    color: white;
+    margin: 1rem;
+    font-family: Atures700, sans-serif;
+    font-size: 10px;
+    line-height: 44px;
+}
+
+.raspberrypi-screen .items .current {
+    background: black;
+    border: 1px solid #ffffff;
+}
+
+
+
+.items .item {
+    flex: 1 0;
+    color: white;
+    margin: 5px;
+    font-family: sans-serif;
+    font-size: 10px;
+    line-height: 20px;
+}
+
+.items .item img, .items .current img {
+    float: right;
+    margin: 2px 5px 2px 0;
+}
+
+.raspberrypi-screen .items .item {
+    background: #4965B8;
+    border: 1px solid #668CFF;
+}
+
+
+
+.items .item a, .items .current {
+    display: block;
+    padding-left: 6rem;
+}
+
+
+
+.tab {
+    overflow: hidden;
+    border: 1px solid grey;
+    color: white;
+}
+
+.raspberrypi-screen .tab {
+    overflow: hidden;
+    border: 1px solid #668CFF;
+    color: white;
+}
+
+
+
+.tab button {
+    background-color: inherit;
+    float: left;
+    border: 1px solid transparent;
+    outline: none;
+    cursor: pointer;
+    padding: 14px 16px;
+    transition: 0.3s;
+    color: white;
+}
+
+
+.tab button.active {
+    background-color: grey;
+}
+
+.raspberrypi-screen .tab button.active {
+    background-color: #668CFF;
+}
+
+
+
+
+.tab button:hover, .tab button:focus {
+    background-color: grey;
+}
+
+.raspberrypi-screen .tab button:hover, .tab button:focus {
+    background-color: #668CFF
+}
+
+
+
+
+.tabcontent {
+    display: none;
+    padding: 6px 12px;
+    border-top: none;
+}
+
+.audioitems {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-evenly;
+}
+
+.audioitems .audioitem {
+    flex: 0 0 125px;
+    color: white;
+    margin: 1rem;
+    font-family: Atures700, sans-serif;
+    font-size: 1rem;
+    line-height: 125px;
+    text-align: center;
+    transition: 0.3s;
+}
+
+.raspberrypi-screen .audioitems .audioitem {
+    background: #4965B8;
+    border: 2px solid #668CFF;
+    border-radius: 125px;
+}
+
+.raspberrypi-screen .audioitems .audioitem:active {
+    margin-top: 1.25rem;
+    margin-bottom: .75rem;
+    background-color: #668CFF;
+}
+
+*/

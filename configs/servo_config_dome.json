@@ -1,0 +1,24 @@
+{
+    "i2c_buses": [
+        {
+            "name": "bus1",
+            "address": "0x40",
+            "scl_pin": "SCL",
+            "sda_pin": "SDA"
+        }
+    ],
+    "servos": [
+        {
+            "id": 0,
+            "name": "servo1",
+            "bus": "bus1",
+            "position": 70
+        },
+        {
+            "id": 1,
+            "name": "servo2",
+            "bus": "bus1",
+            "position": 120
+        }
+    ]
+}
