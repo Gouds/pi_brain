@@ -1,12 +1,13 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 #from gpio_control import turn_on_pin, turn_off_pin
 #from pin_config import PinConfig
 from typing import List
 import os
 from utils import mainconfig
-from plugins.audio.audio_control import audio_list, audio_play, audio_random_list
+from plugins.audio.audio_control import audio_list, audio_play, audio_random_list, audio_random_play, get_volume, set_volume
 from plugins.dome.dome_control import dome_list
 from plugins.body.body_control import body_list
 from plugins.servo.servo_control import i2c_servo_controls
@@ -26,7 +27,7 @@ logfile = mainconfig.mainconfig['logfile']
 
 app = FastAPI(
     title="R2 Brain", 
-    version="0.2",
+    version="0.3",
         openapi_tags=[
         {
             "name": "Audio",
@@ -53,6 +54,15 @@ app = FastAPI(
             "description": "Handles shutdown Items.",
         }
     ] )
+
+# Allow all origins to access the API
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["*"],
+)
 
 #pin_config = PinConfig()
 
@@ -111,9 +121,17 @@ async def audio_play_handler(filename: str):
 async def audio_random_list_handler():
     return await audio_random_list()
 
-#@app.get("/audio/random/{filename}", tags=["Audio"])
-#async def PLACEHOLDER():
-#    return ()
+@app.get("/audio/random/{prefix_name}", tags=["Audio"])
+async def audio_random_play_handler(prefix_name: str):
+    return await audio_random_play(prefix_name)
+
+@app.get("/volume", tags=["Audio"])
+async def get_volume_endpoint():
+    return await get_volume()
+    
+@app.put("/volume/{volume_level}", tags=["Audio"])
+async def set_volume_endpoint(volume_level: int):
+    return await set_volume(volume_level)
 
 #######################
 # SERVO ITEMS

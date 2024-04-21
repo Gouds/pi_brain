@@ -18,7 +18,7 @@
             "id": 0,
             "name": "servo1",
             "bus": "dome",
-            "position": 10
+            "position": 120
         },
         {
             "id": 1,

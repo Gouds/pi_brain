@@ -3,6 +3,7 @@
         <title>R2 Brain</title>   
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
         <script src="javascript/sidemenu.js"></script>
+        <script src="javascript/volume.js"></script>
     </head>
 
     <?php $page = $_GET['page']; $page = $page ?? 'home'; ?>

@@ -2,13 +2,6 @@
 
 include("config.php");
 
-$style = file_get_contents('theme.txt');
-if ($style === "galactic") { #Remove
-	$domeimage = "galactic-dome"; #Remove
-} else {
-	$domeimage = "dome";
-}
-
 $panels = [ "PP1" => "Item 1",
             "PP2" => "Item 2",
             "PP3" => "Item 3",
@@ -33,7 +26,7 @@ if (isset($servo_name)) {
 ?>
 <div class="servowrapper">
     <div class="diagram">
-        <img src="images/<?php echo $domeimage ?>.png" srcset="images/<?php echo $domeimage ?>@2x.png 2x,images/<?php echo $domeimage ?>@3x.png 3x" width="300" height="300" alt="Dome Diagram">
+        <img src="images/dome.png" width="300" height="300" alt="Dome Diagram">
     </div>
     <div class="table">
         <table>

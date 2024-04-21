@@ -2,13 +2,6 @@
 
 include("include/config.php");
 
-$style = file_get_contents('theme.txt');
-if ($style === "galactic") {
-	$bodyimage = "galactic-body";
-} else {
-	$bodyimage = "body";
-}
-
 $panels = ["LLD" => "Item 1",
             "DATA" => "Item 2",
             "CBD" => "Item  3",
@@ -33,7 +26,7 @@ if (isset($servo_name)) {
 ?>
 <div class="servowrapper">
     <div class="diagram">
-        <img src="images/<?php echo $bodyimage ?>.png" srcset="images/<?php echo $bodyimage ?>@2x.png 2x,images/<?php echo $bodyimage ?>@3x.png 3x" width="300" height="300" alt="Body Diagram">
+        <img src="images/body.png" width="300" height="300" alt="Body Diagram">
     </div>
     <div class="table">
         <table>

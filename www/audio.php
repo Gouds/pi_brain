@@ -25,7 +25,7 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 			$url = "http://localhost:8000/audio/" . $play;
 			$handle = fopen($url, "r");
 		} elseif (isset($random)) {
-			echo "Playing&hellip; $play\n";
+			echo "Playing&hellip; $random\n";
 			$url = "http://localhost:8000/audio/random/" . $random;
 			$handle = fopen($url, "r");
 		}
@@ -91,8 +91,6 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 
 		?>
 </div>
-
- 
 </div>
 <script>
     function openTab(evt, groupName) {

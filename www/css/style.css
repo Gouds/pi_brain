@@ -88,19 +88,19 @@ header h1 {
 }
 
 .header {
-    width: 60%;
+    width: 50%;
     border: none;
     color: white;
 }
 
 .leftheader {
-    width: 20%;
+    width: 25%;
     display: inline-flex;
     font-family: sans-serif;
 }
 
 .rightheader {
-    width: 20%;
+    width: 25%;
     display: inline-flex;
     font-family: sans-serif;
 }
@@ -470,3 +470,37 @@ h3.current, h3.avail {
 }
 
 */
+    /* Popup container */
+    .popup {
+        display: none;
+        position: fixed;
+        left: 450px;
+        top: 200px;
+        transform: translate(-50%, -50%);
+        z-index: 999;
+        background-color: #ffffff;
+        padding: 20px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Close button */
+    .close {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 20px;
+        color: #aaa;
+    }
+
+    .close:hover,
+    .close:focus {
+        color: #000;
+    }
+    .volhead
+        {
+        color: #000000;
+        font-weight: bold;
+    }

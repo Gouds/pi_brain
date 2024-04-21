@@ -6,7 +6,9 @@ from pydantic import BaseModel
 from typing import List
 import os
 from utils import mainconfig
+import glob
 import random
+import subprocess
 
 app = FastAPI()
 
@@ -31,6 +33,7 @@ _Random_Sounds = ['alarm',
                   'proc',
                   'whistle',
                   'scream']
+
 
 
 async def audio_list():
@@ -61,3 +64,75 @@ async def audio_play(filename: str):
 async def audio_random_list():
     # return {"random_sounds": _Random_Sounds}
     return _Random_Sounds
+
+
+async def audio_random_play(prefix_name: str):
+    try:
+        # Convert the prefix to lowercase
+        prefix_name_lower = prefix_name.lower()
+        
+        if prefix_name_lower not in [p.lower() for p in _Random_Sounds]:
+            raise HTTPException(status_code=400, detail="Invalid prefix")
+    
+        # List audio files in the 'audio' directory
+        audio_files = [filename for filename in os.listdir("audio") if filename.endswith((".wav", ".mp3", ".ogg"))]
+        # Filter files with the given prefixes
+        #filtered_files = [file for file in audio_files for prefix in _Random_Sounds if file.startswith(prefix)]
+        filtered_files = [file for file in audio_files for prefix in _Random_Sounds if file.lower().startswith(prefix_name_lower)]
+        if not filtered_files:
+            raise HTTPException(status_code=404, detail="No matching audio files found")
+        # Select a random file from the filtered list
+        random_file = random.choice(filtered_files)
+        
+        filepath = os.path.join("audio", random_file)
+        if os.path.exists(filepath):
+            # Load the audio file
+            pygame.mixer.music.load(filepath)
+            # Play the audio file
+            pygame.mixer.music.play()
+            return {"message": f"Playing random audio file: {random_file}"}
+        else:
+            raise HTTPException(status_code=404, detail="Audio file not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+async def get_volume():
+    try:
+        # Execute the 'amixer' command to get the volume information
+        result = subprocess.run(['amixer', 'get', 'Master'], capture_output=True, text=True)
+        
+        # Check if the command executed successfully
+        if result.returncode != 0:
+            error_output = result.stderr.strip()
+            return f"Failed to get volume information. Error: {error_output}"
+        
+        # Extract the volume level from the command output
+        output_lines = result.stdout.split('\n')
+        for line in output_lines:
+            if 'Front Left:' in line:
+                volume_info = line.strip().split()
+                # Search for the volume level
+                for item in volume_info:
+                    if '%' in item:
+                        current_volume = item.replace('[', '').replace(']', '').replace('%', '')
+                        return current_volume
+
+        # If volume information is not found in the output, return an error
+        return "Volume information not found"
+    except Exception as e:
+        return str(e)
+    
+async def set_volume(volume_level: int):
+    try:
+        # Execute the 'amixer' command to set the volume
+        result = subprocess.run(['amixer', 'set', 'Master', f"{volume_level}%"], capture_output=True, text=True)
+        
+        # Check if the command executed successfully
+        if result.returncode != 0:
+            error_output = result.stderr.strip()
+            return {"error": f"Failed to set volume. Error: {error_output}"}
+        
+        return {"message": f"Volume set to {volume_level}%"}
+    except Exception as e:
+        return {"error": str(e)}
