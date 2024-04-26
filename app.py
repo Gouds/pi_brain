@@ -41,7 +41,11 @@ app = FastAPI(
             "name": "Dome",
             "description": "Handles Dome Items.",
         },
-                {
+        {
+            "name": "HoloProjector",
+            "description": "Handles HoloProjectors Items.",
+        },
+        {
             "name": "Body",
             "description": "Handles Dome Items.",
         },
@@ -201,6 +205,37 @@ async def PLACEHOLDER():
 @app.get("/dome/open/<duration>", tags=["Dome"])
 async def PLACEHOLDER():
     return ()
+
+
+#######################
+# HOLOPROJECTOR ITEMS - SERVOS
+#######################
+
+
+@app.get("/holoprojector/list/", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
+@app.get("/holoprojector/<servo_name>/<servo_position>/<servo_Duration>", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
+@app.get("/holoprojector/close", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
+@app.get("/holoprojector/close/<duration>", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
+@app.get("/holoprojector/open", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
+@app.get("/holoprojector/open/<duration>", tags=["HoloProjector"])
+async def PLACEHOLDER():
+    return ()
+
 
 
 
