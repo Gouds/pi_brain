@@ -1,0 +1,12 @@
+audio random happy
+sleep 2
+servo position dome 0 2
+sleep 2
+audio random quote
+sleep 2
+servo position dome 0 100
+sleep 2
+audio random scream
+sleep 2
+audio play RoboC001.mp3
+sleep 2

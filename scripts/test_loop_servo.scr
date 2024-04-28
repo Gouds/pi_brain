@@ -1,0 +1,4 @@
+servo position dome 0 2
+sleep 1
+servo position dome 0 100
+sleep 1

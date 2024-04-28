@@ -1,0 +1,8 @@
+servo open servo1
+sleep 1
+servo open servo2
+sleep 1
+servo close servo1
+sleep 1
+servo close servo2
+sleep 1

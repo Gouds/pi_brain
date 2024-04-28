@@ -18,19 +18,36 @@
             "id": 0,
             "name": "servo1",
             "bus": "dome",
-            "position": 120
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
         },
         {
             "id": 1,
             "name": "servo2",
             "bus": "dome",
-            "position": 120
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 2,
+            "name": "servo3",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 2
         },
         {
             "id": 0,
             "name": "servo3",
             "bus": "body",
-            "position": 120
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110
         }
     ]
 }

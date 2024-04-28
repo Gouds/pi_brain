@@ -11,7 +11,7 @@ from plugins.audio.audio_control import audio_list, audio_play, audio_random_lis
 from plugins.dome.dome_control import dome_list
 from plugins.body.body_control import body_list
 from plugins.servo.servo_control import i2c_servo_controls
-from plugins.script.script_control import script_list
+from plugins.script.script_control import script_list, script_start_handler, running_scripts, stop_script, stop_all_scripts
 #import board
 #import busio
 #from adafruit_servokit import ServoKit
@@ -160,10 +160,8 @@ async def get_servos():
 async def get_servos():
     return servo_config["i2c_buses"]
 
-
-
-    # Define route to move a specific servo to a position
-@app.put("/servos/{bus_name}/{servo_id}/move", tags=["Servo"])
+# Define route to move a specific servo to a position
+@app.get("/servos/{bus_name}/{servo_id}/move", tags=["Servo"])
 async def move_servo(bus_name: str, servo_id: int, position: int):
     if bus_name in i2c_servo_controls:
         i2c_servo_control = i2c_servo_controls[bus_name]
@@ -182,14 +180,39 @@ async def move_servo(bus_name: str, servo_id: int, position: int):
     else:
         return {"message": f"Invalid bus name: {bus_name}"}
 
+
+@app.get("/servo/open/{servo_name}")
+async def open_servo(servo_name: str):
+    # Find the servo with the given name
+    for servo in servo_config['servos']:
+        if servo['name'] == servo_name:
+            # Open the servo
+            await move_servo(servo['bus'], servo['id'], servo['open_position'])
+            return {"message": f"Opened servo {servo_name}"}
+
+    return {"error": "Servo not found"}
+
+@app.get("/servo/close/{servo_name}")
+async def close_servo(servo_name: str):
+    # Find the servo with the given name
+    for servo in servo_config['servos']:
+        if servo['name'] == servo_name:
+            # Close the servo
+            await move_servo(servo['bus'], servo['id'], servo['close_position'])
+            return {"message": f"Closed servo {servo_name}"}
+
+    return {"error": "Servo not found"}
+
 #######################
 # DOME ITEMS - SERVOS
 #######################
 
 
-@app.get("/dome/list/", tags=["Dome"])
+@app.get("/dome/list", tags=["Dome"])
 async def dome_list_handeler():
-    return await dome_list()
+    dome_servos = [servo for servo in servo_config["servos"] if servo["bus"] == "dome"]
+    return dome_servos
+
 
 @app.get("/dome/<servo_name>/<servo_position>/<servo_Duration>", tags=["Dome"])
 async def PLACEHOLDER():
@@ -248,9 +271,12 @@ async def PLACEHOLDER():
 # BODY ITEMS - SERVOS
 #######################
 
-@app.get("/body/list/", tags=["Body"])
+@app.get("/body/list", tags=["Body"])
 async def body_list_handeler():
-    return await body_list()
+    body_servos = [servo for servo in servo_config["servos"] if servo["bus"] == "body"]
+    return body_servos
+
+
 
 @app.get("/body/<servo_name>/<servo_position>/<servo_Duration>", tags=["Body"])
 async def PLACEHOLDER():
@@ -440,105 +466,6 @@ async def stop_single_script(script_id: str):
 @app.get("/script/stop_all", tags=["Script"])
 async def stop_all_running_scripts():
     return await stop_all_scripts()
-
-import asyncio 
-import uuid  # Import uuid module
-from concurrent.futures import ThreadPoolExecutor
-
-# Dictionary to hold information about running scripts
-running_scripts = {}
-
-async def run_script(script_name: str, loop: int, script_id: str):
-    try:
-        # Construct the path to the script file
-        script_path = f"scripts/{script_name}.scr"
-        print("Script Path:", script_path)  # Debug output
-
-        # Check if the script file exists
-        if not os.path.exists(script_path):
-            raise FileNotFoundError
-
-        # Read the script file
-        with open(script_path, "r") as script_file:
-            script_content = script_file.readlines()
-
-        # Store the script information in the running_scripts dictionary
-        running_scripts[script_id] = {"script_name": script_name, "status": "running"}
-
-        # Parse and execute each command in the script
-        for line in script_content:
-            command = line.strip().split(" ")
-            print("Executing command:", line.strip())  # Debug output
-            if command[0] == "audio":
-                if command[1] == "play":
-                    await audio_play_handler(command[2])
-                elif command[1] == "random":
-                    await audio_random_play_handler(command[2])
-            elif command[0] == "servo":
-                # Handle servo commands
-                pass  # Implement servo command handling
-            elif command[0] == "dome":
-                # Handle dome commands
-                pass  # Implement dome command handling
-            elif command[0] == "holoprojector":
-                # Handle holoprojector commands
-                pass  # Implement holoprojector command handling
-            elif command[0] == "body":
-                # Handle body commands
-                pass  # Implement body command handling
-            elif command[0] == "gpio":
-                # Handle GPIO commands
-                pass  # Implement GPIO command handling
-            elif command[0] == "sleep":
-                # Sleep command
-                await asyncio.sleep(int(command[1]))
-            # Add handling for other commands here
-            else:
-                # Unknown command
-                raise HTTPException(status_code=400, detail=f"Unknown command '{command[0]}' in script")
-
-            # Check if the script has been stopped
-            if script_id not in running_scripts:
-                break
-
-        # If loop is enabled and the script hasn't been stopped, restart the script
-        if int(loop) == 1 and script_id in running_scripts:
-            await run_script(script_name, loop, script_id)
-
-        # Remove the script information from the running_scripts dictionary
-        if script_id in running_scripts:
-            del running_scripts[script_id]
-
-    except FileNotFoundError:
-        raise HTTPException(status_code=404, detail=f"Script '{script_name}' not found")
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-async def script_start_handler(script_name: str, loop: int, background_tasks: BackgroundTasks):
-    # Generate a unique ID for the script
-    script_id = str(uuid.uuid4())
-    # Run the script in a background task
-    background_tasks.add_task(run_script, script_name, loop, script_id)
-    return {"script_id": script_id, "message": f"Script '{script_name}' execution started"}
-
-
-
-# Function to stop a single script
-async def stop_script(script_id: str):
-    if script_id in running_scripts:
-        # Add logic here to stop the script if needed
-        del running_scripts[script_id]
-        return {"message": f"Script '{script_id}' stopped successfully"}
-    else:
-        raise HTTPException(status_code=404, detail=f"Script '{script_id}' not found")
-
-# Function to stop all running scripts
-async def stop_all_scripts():
-    for script_id in list(running_scripts.keys()):
-        # Add logic here to stop each script if needed
-        del running_scripts[script_id]
-    return {"message": "All running scripts stopped successfully"}
-
 
 
 
