@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, File, UploadFile, Query
+from fastapi import FastAPI, HTTPException, File, UploadFile, Query, BackgroundTasks
 from fastapi.responses import JSONResponse, PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
@@ -11,6 +11,7 @@ from plugins.audio.audio_control import audio_list, audio_play, audio_random_lis
 from plugins.dome.dome_control import dome_list
 from plugins.body.body_control import body_list
 from plugins.servo.servo_control import i2c_servo_controls
+from plugins.script.script_control import script_list
 #import board
 #import busio
 #from adafruit_servokit import ServoKit
@@ -53,9 +54,13 @@ app = FastAPI(
             "name": "GPIO",
             "description": "Handles GPIO Items.",
         },
-                {
+        {
+            "name": "Script",
+            "description": "Handles Script Items.",
+        },
+        {
             "name": "Shutdown",
-            "description": "Handles shutdown Items.",
+            "description": "Handles Shutdown Items.",
         }
     ] )
 
@@ -405,6 +410,137 @@ def turn_off_pin(pin):
 
 def turn_on_pin(pin):
     GPIO.output(pin, GPIO.HIGH)
+
+
+
+
+
+######################
+# SCRIPT ITEMS - SERVOS
+#######################
+
+@app.get("/script/list/", tags=["Script"])
+async def script_list_handeler():
+    return await script_list()
+
+@app.get("/script/start/{script_name}/{loop}", tags=["Script"])
+async def start_script(script_name: str, loop: int, background_tasks: BackgroundTasks):
+    return await script_start_handler(script_name, loop, background_tasks)
+
+@app.get("/script/list_running", tags=["Script"])
+async def list_running_scripts():
+    return {"running_scripts": running_scripts}
+
+# Define endpoint to stop a single script
+@app.get("/script/stop/{script_id}", tags=["Script"])
+async def stop_single_script(script_id: str):
+    return await stop_script(script_id)
+
+# Define endpoint to stop all running scripts
+@app.get("/script/stop_all", tags=["Script"])
+async def stop_all_running_scripts():
+    return await stop_all_scripts()
+
+import asyncio 
+import uuid  # Import uuid module
+from concurrent.futures import ThreadPoolExecutor
+
+# Dictionary to hold information about running scripts
+running_scripts = {}
+
+async def run_script(script_name: str, loop: int, script_id: str):
+    try:
+        # Construct the path to the script file
+        script_path = f"scripts/{script_name}.scr"
+        print("Script Path:", script_path)  # Debug output
+
+        # Check if the script file exists
+        if not os.path.exists(script_path):
+            raise FileNotFoundError
+
+        # Read the script file
+        with open(script_path, "r") as script_file:
+            script_content = script_file.readlines()
+
+        # Store the script information in the running_scripts dictionary
+        running_scripts[script_id] = {"script_name": script_name, "status": "running"}
+
+        # Parse and execute each command in the script
+        for line in script_content:
+            command = line.strip().split(" ")
+            print("Executing command:", line.strip())  # Debug output
+            if command[0] == "audio":
+                if command[1] == "play":
+                    await audio_play_handler(command[2])
+                elif command[1] == "random":
+                    await audio_random_play_handler(command[2])
+            elif command[0] == "servo":
+                # Handle servo commands
+                pass  # Implement servo command handling
+            elif command[0] == "dome":
+                # Handle dome commands
+                pass  # Implement dome command handling
+            elif command[0] == "holoprojector":
+                # Handle holoprojector commands
+                pass  # Implement holoprojector command handling
+            elif command[0] == "body":
+                # Handle body commands
+                pass  # Implement body command handling
+            elif command[0] == "gpio":
+                # Handle GPIO commands
+                pass  # Implement GPIO command handling
+            elif command[0] == "sleep":
+                # Sleep command
+                await asyncio.sleep(int(command[1]))
+            # Add handling for other commands here
+            else:
+                # Unknown command
+                raise HTTPException(status_code=400, detail=f"Unknown command '{command[0]}' in script")
+
+            # Check if the script has been stopped
+            if script_id not in running_scripts:
+                break
+
+        # If loop is enabled and the script hasn't been stopped, restart the script
+        if int(loop) == 1 and script_id in running_scripts:
+            await run_script(script_name, loop, script_id)
+
+        # Remove the script information from the running_scripts dictionary
+        if script_id in running_scripts:
+            del running_scripts[script_id]
+
+    except FileNotFoundError:
+        raise HTTPException(status_code=404, detail=f"Script '{script_name}' not found")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+async def script_start_handler(script_name: str, loop: int, background_tasks: BackgroundTasks):
+    # Generate a unique ID for the script
+    script_id = str(uuid.uuid4())
+    # Run the script in a background task
+    background_tasks.add_task(run_script, script_name, loop, script_id)
+    return {"script_id": script_id, "message": f"Script '{script_name}' execution started"}
+
+
+
+# Function to stop a single script
+async def stop_script(script_id: str):
+    if script_id in running_scripts:
+        # Add logic here to stop the script if needed
+        del running_scripts[script_id]
+        return {"message": f"Script '{script_id}' stopped successfully"}
+    else:
+        raise HTTPException(status_code=404, detail=f"Script '{script_id}' not found")
+
+# Function to stop all running scripts
+async def stop_all_scripts():
+    for script_id in list(running_scripts.keys()):
+        # Add logic here to stop each script if needed
+        del running_scripts[script_id]
+    return {"message": "All running scripts stopped successfully"}
+
+
+
 
 #######################
 # SHUTDOWN ITEMS
