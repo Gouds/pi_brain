@@ -27,7 +27,7 @@ body.raspberrypi-screen {
     display: flex;
     flex-flow: wrap;
     width: 800px;
-    height: 400px;
+    height: 480px;
 }
 
 /*.flexrow {
@@ -119,9 +119,10 @@ header h1 {
 
 .contentwrapper {
     width: 800px;
-    height: 300px;
+    height: 380px;
     display: flex;
     flex-flow: row;
+
 }
 
 /*******************
