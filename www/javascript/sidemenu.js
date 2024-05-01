@@ -36,11 +36,11 @@ var menuState = 0; // 0: Both hidden, 1: Left visible, 2: Right visible
             var menuButton = document.getElementById("menuButton");
             var icon = "";
             if (menuState === 0) {
-                icon = "both_hidden";
+                icon = "icon_menu";
             } else if (menuState === 1) {
-                icon = "left_visible";
+                icon = "icon_menu";
             } else {
-                icon = "right_visible";
+                icon = "icon_menu";
             }
             menuButton.src = "images/" + icon + ".png";
         }

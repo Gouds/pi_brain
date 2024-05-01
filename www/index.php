@@ -1,6 +1,6 @@
 <html>
     <head>
-        <title>R2 Brain</title>   
+        <title>Pi Brain</title>   
         <link rel="stylesheet" type="text/css" href="css/style.css"/>
         <script src="javascript/sidemenu.js"></script>
         <script src="javascript/volume.js"></script>
