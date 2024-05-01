@@ -1,0 +1,5 @@
+update the web site:
+    edit both
+        /ect/apache2/apache2.conf
+        /ect/apache2/sites-availible/000-default
+    both of these will need to have the path of the site.
