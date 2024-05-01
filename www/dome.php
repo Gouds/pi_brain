@@ -2,7 +2,7 @@
 
 include("config.php");
 
-$json = file_get_contents("http://localhost:8000/dome/list");
+$json = file_get_contents($site_url . "/dome/list");
 $servo_list = json_decode($json, true);  // Convert the JSON array into a PHP array
 
 ?>
@@ -27,8 +27,8 @@ foreach ($servo_list as $servo) {
     $key = $servo["name"];
     echo "<tr>
             <td class='panel'>$i $key</td>
-            <td><a href=\"#\" onclick=\"sendRequest('http://localhost:8000/servo/open/$key')\">Open</a></td>
-            <td><a href=\"#\" onclick=\"sendRequest('http://localhost:8000/servo/close/$key')\">Close</a></td>
+            <td><a href=\"#\" onclick=\"sendRequest('$site_url/servo/open/$key')\">Open</a></td>
+            <td><a href=\"#\" onclick=\"sendRequest('$site_url/servo/close/$key')\">Close</a></td>
         </tr>\n";
 }
 ?>

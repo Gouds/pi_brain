@@ -12,7 +12,7 @@
     // Function to get the current volume from the FastAPI server
     function getCurrentVolume() {
         console.log('Fetching current volume...');
-        fetch('http://127.0.0.1:8000/volume')
+        fetch(site_url + '/volume')
             .then(response => {
                 console.log('Response status:', response.status);
                 if (!response.ok) {
@@ -36,7 +36,7 @@
     // Function to set the volume
     function setVolume(volume) {
         // Send a request to the FastAPI server to update the volume
-        fetch('http://127.0.0.1:8000/volume/' + volume, { method: 'PUT' })
+        fetch(site_url + '/volume/' + volume, { method: 'PUT' })
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Failed to update volume');

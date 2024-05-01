@@ -1,4 +1,8 @@
-<?php $style = file_get_contents('theme.txt'); ?>
+<?php 
+include("config.php");
+$style = file_get_contents('theme.txt'); 
+?>
+
 <header>
     <div class="leftheader">
         
@@ -18,6 +22,10 @@
         </a>
     </div>
 </header>
+
+<script>
+    var site_url = "<?php echo $site_url; ?>";
+</script>
 
 <!-- Volume Popup -->
 <div id="volumePopup" class="popup">

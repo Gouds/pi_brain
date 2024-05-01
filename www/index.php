@@ -5,7 +5,6 @@
         <script src="javascript/sidemenu.js"></script>
         <script src="javascript/volume.js"></script>
     </head>
-
     <?php $page = $_GET['page']; $page = $page ?? 'home'; ?>
 
     <body id="body" class="<?php echo file_get_contents('theme.txt'); ?>">

@@ -1,6 +1,6 @@
 <?php
 
-include("include/config.php");
+include("config.php");
 
 $play = $_GET["play"];
 $loop = $_GET["loop"];
@@ -13,10 +13,10 @@ if(!isset($loop)) {
 if(isset($stop)) {
     if ($stop == "all") {
         echo "Stopping all scripts...<br />\n";
-        $url = "http://localhost:8000/script/stop_all";
+        $url = "$site_url/script/stop_all";
     } else {
         echo "Stopping... $stop<br />\n";
-        $url = "http://localhost:8000/script/stop/".$stop;
+        $url = "$site_url/script/stop/".$stop;
     }
     $handle = fopen($url, "r");
 }
@@ -24,12 +24,12 @@ if(isset($stop)) {
 
 if(isset($play)) {
    echo "<p class='flexrow'>Playing&hellip; $play</p>\n";
-   $url = "http://localhost:8000/script/start/".$play."/".$loop;
+   $url = "$site_url/script/start/".$play."/".$loop;
    $handle = fopen($url, "r");
 }
 
 // Display running scripts
-$url = "http://localhost:8000/script/list_running";
+$url = "$site_url/script/list_running";
 $running_scripts_json = file_get_contents($url);
 $running_scripts = json_decode($running_scripts_json, true);
 echo "<div class=items>";
@@ -43,7 +43,7 @@ foreach ($running_scripts['running_scripts'] as $id => $script_details) {
 }
 echo "</div>";
 
-$url = "http://localhost:8000/script/list/";
+$url = "$site_url/script/list/";
 $fh = fopen($url, "r");
 $files = str_getcsv(str_replace(" ", "", stream_get_contents($fh)), ",");
 sort($files);

@@ -22,15 +22,15 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 
 		if (isset($play)) {
 			echo "Playing&hellip; $play\n";
-			$url = "http://localhost:8000/audio/" . $play;
+			$url = "$site_url/audio/" . $play;
 			$handle = fopen($url, "r");
 		} elseif (isset($random)) {
 			echo "Playing&hellip; $random\n";
-			$url = "http://localhost:8000/audio/random/" . $random;
+			$url = "$site_url/audio/random/" . $random;
 			$handle = fopen($url, "r");
 		}
 
-		$url = "http://localhost:8000/audio/list/";
+		$url = "$site_url/audio/list/";
 		$fh = fopen($url, "r");
 		$files = str_getcsv(str_replace(" ", "", stream_get_contents($fh)), ",");
 		sort($files);
