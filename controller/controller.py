@@ -4,7 +4,7 @@ import requests
 import threading
 import time  # Add this import
 
-#url = '192.168.20.231'  # Replace with your URL
+url = '192.168.20.231'  # Replace with your URL
 
 print('Starting script...')
 
@@ -25,7 +25,7 @@ def send_command(command):
 def read_joystick_commands():
     try:
         print('Opening serial port...')
-        with serial.Serial('/dev/ttyACM0', 9600, timeout=1) as ser:  # Replace '/dev/ttyACM0' with your serial port
+        with serial.Serial('/dev/ttyUSB0', 9600, timeout=1) as ser:  # Replace '/dev/ttyACM0' with your serial port
             print('Serial port opened')
             while True:
                 print('Reading from serial port...')
