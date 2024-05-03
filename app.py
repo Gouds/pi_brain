@@ -475,16 +475,21 @@ async def stop_all_running_scripts():
 ######################
 # JOY STICK ITEMS - SERVOS
 #######################
-
 @app.post("/joystick", tags=["Joystick"])
 async def joystick_command(command: str):
-    if command == 'move_forward':
-        move_forward()  # Call the function to move forward
-    elif command == 'move_backward':
-        move_backward()  # Call the function to move backward
-    # etc.
-    return {"message": f"Received joystick command: {command}"}
+    print('Joystick endpoint hit')  # Add this line
+    print(f'Received command: {command}')
+    positions = command.split()
+    if len(positions) != 6:
+        return {"error": "Expected 6 positions"}
 
+    # Now positions is a list of 6 strings
+    # You can access the positions with positions[0], positions[1], etc.
+    # Replace this with your actual code to handle the joystick commands
+    for i, position in enumerate(positions):
+        print(f'Position {i + 1}: {position}')
+
+    return {"message": f"Received joystick command: {positions}"}
 #######################
 # SHUTDOWN ITEMS
 #######################
