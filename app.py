@@ -58,6 +58,10 @@ app = FastAPI(
             "name": "Script",
             "description": "Handles Script Items.",
         },
+                {
+            "name": "Joystick",
+            "description": "Handles Joystick Items.",
+        },
         {
             "name": "Shutdown",
             "description": "Handles Shutdown Items.",
@@ -468,6 +472,18 @@ async def stop_all_running_scripts():
     return await stop_all_scripts()
 
 
+######################
+# JOY STICK ITEMS - SERVOS
+#######################
+
+@app.post("/joystick", tags=["Joystick"])
+async def joystick_command(command: str):
+    if command == 'move_forward':
+        move_forward()  # Call the function to move forward
+    elif command == 'move_backward':
+        move_backward()  # Call the function to move backward
+    # etc.
+    return {"message": f"Received joystick command: {command}"}
 
 #######################
 # SHUTDOWN ITEMS
