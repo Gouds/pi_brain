@@ -1,8 +1,8 @@
-import webbrowser
 import subprocess
 import serial
 import requests
 import threading
+import time  # Add this import
 
 #url = '192.168.20.231'  # Replace with your URL
 
@@ -40,3 +40,7 @@ def read_joystick_commands():
 print('Starting joystick command reader...')
 threading.Thread(target=read_joystick_commands, daemon=True).start()
 print('Joystick command reader started')
+
+# Keep the main thread alive
+while True:
+    time.sleep(10)
