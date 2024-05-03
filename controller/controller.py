@@ -17,7 +17,10 @@ print('Opened web browser in kiosk mode')
 def send_command(command):
     try:
         print(f'Sending command: {command}')
-        response = requests.post(f'http://{url}:8000/joystick', data={'command': command})
+        request_url = f'http://{url}:8000/joystick'
+        request_data = {'command': command}
+        print(f'HTTP request: POST {request_url}, data={request_data}')
+        response = requests.post(request_url, data=request_data)
         print(f'Sent command: {command}, received response: {response.text}')
     except Exception as e:
         print(f'Error sending command: {e}')
@@ -33,6 +36,8 @@ def read_joystick_commands():
                 print(f'Read from serial port: {command}')
                 if command:
                     send_command(command)
+                    time.sleep(1)  # Add a delay here
+
     except Exception as e:
         print(f'Error reading joystick commands: {e}')
 
