@@ -23,6 +23,7 @@ def read_joystick_commands():
         while True:
             command = ser.readline().decode().strip()  # Read a line from the serial port
             if command:
+                print(f'Read command: {command}')
                 send_command(command)
 
 # Start the joystick command reader in a separate thread
