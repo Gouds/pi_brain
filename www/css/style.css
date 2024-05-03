@@ -266,10 +266,11 @@ sidemenu a {
 *  DOME
 *******************/
 
-.servowrapper, .audiowrapper {
+.servowrapper, .audiowrapper .pagewrapper{
     width: 100%;
     display: flex;
     flex-direction: row;
+    position: relative;
 }
 
 .diagram {

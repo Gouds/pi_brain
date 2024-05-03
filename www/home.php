@@ -1,5 +1,10 @@
-Welcome to Pi Brain. 
+<?php
 
+include("config.php");
+
+?>
+<div class="pagewrapper" style="position: relative; height: 400px;">
+<h1>Welcome to Pi Brain. </h1>
 
 
 Power on: 
@@ -7,12 +12,24 @@ Power on:
  - Motors
  - HoloProjectors
  - Lights
- <img id="homeImage" src="/images/home_r2.png" alt="Home Image">
+hjhjh
+<br><br>
+dfddsf
 
+    <!-- Other content -->
+    <img id="homeImage" src="/images/home_r2.png">
+</div>
+
+
+
+
+
+
+ 
  <style>
     #homeImage {
-        position: fixed;
-        right: 1;
-        bottom: 50;
+        position: absolute;
+        right: 0;
+        bottom: 5px;
     }
  </style>

@@ -10,7 +10,7 @@ print('Starting script...')
 
 # Open the web browser in kiosk mode
 # This command is for Google Chrome on Linux. Modify it according to your browser and operating system
-#subprocess.Popen(['chromium-browser', '--kiosk', url])
+subprocess.Popen(['chromium-browser', '--kiosk', url])
 
 print('Opened web browser in kiosk mode')
 

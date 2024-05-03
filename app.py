@@ -475,7 +475,7 @@ async def stop_all_running_scripts():
 ######################
 # JOY STICK ITEMS - SERVOS
 #######################
-@app.get("/joystick/{command}", tags=["Joystick"])  # Change this line
+@app.post("/joystick/{command}", tags=["Joystick"])  # Change this line
 async def joystick_command(command: str):
     print('Joystick endpoint hit')  # Add this line
     print(f'Received command: {command}')
