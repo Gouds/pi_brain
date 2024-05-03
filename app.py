@@ -475,11 +475,11 @@ async def stop_all_running_scripts():
 ######################
 # JOY STICK ITEMS - SERVOS
 #######################
-@app.post("/joystick", tags=["Joystick"])
+@app.get("/joystick/{command}", tags=["Joystick"])  # Change this line
 async def joystick_command(command: str):
     print('Joystick endpoint hit')  # Add this line
     print(f'Received command: {command}')
-    positions = command.split()
+    positions = command.split('-')  # Change this line
     if len(positions) != 6:
         return {"error": "Expected 6 positions"}
 

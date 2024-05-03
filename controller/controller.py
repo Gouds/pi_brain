@@ -16,11 +16,12 @@ print('Opened web browser in kiosk mode')
 
 def send_command(command):
     try:
-        print(f'Sending command: {command}')
-        request_url = f'http://{url}:8000/joystick/{command}'
+        command_with_hyphens = command.replace(' ', '-')
+        print(f'Sending command: {command_with_hyphens}')
+        request_url = f'http://{url}:8000/joystick/{command_with_hyphens}'
         print(f'HTTP request: POST {request_url}')
         response = requests.post(request_url)
-        print(f'Sent command: {command}, received response: {response.text}')
+        print(f'Sent command: {command_with_hyphens}, received response: {response.text}')
     except Exception as e:
         print(f'Error sending command: {e}')
 
