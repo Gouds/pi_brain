@@ -27,8 +27,15 @@ logdir = mainconfig.mainconfig['logdir']
 logfile = mainconfig.mainconfig['logfile']
 
 app = FastAPI(
-    title="R2 Brain", 
-    version="0.3",
+    title="Pi Brain", 
+    version="0.5",
+    description="Pi Brain is designed to control Raspberry Pi robots and droids. This is a platform that allows for easy control of multiple control systems including Servos, Audio, Motor Controls and a whole lot more. Its designed to be flexible and easy to use.  Pi Brain is driven by FastAPI and controlled by touch and control systems.",
+    contact={
+        "name": "Chris Goudie",
+        "url": "http://www.goudie.me",
+        "email": "chris@goudie.me",
+        },
+
         openapi_tags=[
         {
             "name": "Audio",
@@ -63,8 +70,8 @@ app = FastAPI(
             "description": "Handles Joystick Items.",
         },
         {
-            "name": "Shutdown",
-            "description": "Handles Shutdown Items.",
+            "name": "System",
+            "description": "Handles System Items.",
         }
     ] )
 
@@ -490,12 +497,17 @@ async def joystick_command(command: str):
         print(f'Position {i + 1}: {position}')
 
     return {"message": f"Received joystick command: {positions}"}
-#######################
-# SHUTDOWN ITEMS
-#######################
 
 
-@app.get("/shutdown", tags=["Shutdown"])
+#######################
+# SYSTEM ITEMS
+#######################
+@app.get("/health", tags=["System"])
+async def health_check():
+    return {"status": "ok"}
+
+
+@app.get("/shutdown", tags=["System"])
 async def shutdown_pi():
     # Execute the shutdown command using subprocess
     subprocess.run(["sudo", "shutdown", "-h", "now"])
