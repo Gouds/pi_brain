@@ -49,13 +49,13 @@ $files = str_getcsv(str_replace(" ", "", stream_get_contents($fh)), ",");
 sort($files);
 $num_files=sizeof($files);
 
-echo "<div class=items>";
+echo "<div class=script-containter>";
 echo "<h2>All Scripts</h2>";
-echo "<div class=item><a href=\"?page=scripts&stop=all\">Stop All</a></div>";
+echo "<div class=script-item><a href=\"?page=scripts&stop=all\">Stop All</a></div>";
 for ($i = 0 ; $i < $num_files ; $i++) {
    $files[$i] = trim($files[$i], '[]"');  // Remove [ and " from the item
    $files[$i] = str_replace('.scr', '', $files[$i]);  // Remove .scr from the item
-   echo "<div class=item>";
+   echo "<div class=script-item>";
    echo $files[$i];
    echo " <a href=\"?page=scripts&play=".$files[$i]."&loop=0\">Play Once</a>";
    echo " <a href=\"?page=scripts&play=".$files[$i]."&loop=1\">Loop</a>";

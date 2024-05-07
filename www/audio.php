@@ -5,7 +5,7 @@ include("config.php");
 $play = $_GET["play"];
 $random = $_GET["random"];
 
-$sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "sent", "ooh", "proc", "whist", "screa", "theme");
+$sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "sent", "ooh", "proc", "whistle", "scream", "theme");
 ?>
 
 <div class="audiowrapper">
@@ -20,6 +20,8 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 					|| strrpos($haystack, $needle, -strlen($haystack)) !== false;
 		}
 
+		echo "<div class='audio-info'>";
+
 		if (isset($play)) {
 			echo "Playing&hellip; $play\n";
 			$url = "$site_url/audio/" . $play;
@@ -29,6 +31,8 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 			$url = "$site_url/audio/random/" . $random;
 			$handle = fopen($url, "r");
 		}
+		
+		echo "</div>";
 
 		$url = "$site_url/audio/list/";
 		$fh = fopen($url, "r");
@@ -37,21 +41,28 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 		$num_files = sizeof($files);
 
 		echo "</p>\n";
-		echo "<div class=tab>\n";
+		echo "<div class='tab-container'>\n";
+		$first = true;
 		foreach ($sound_groups as $group) {
-			echo "<button class=tablinks onclick=\"openTab(event, '$group')\">" . ucfirst($group) . "</button>";
+			$activeClass = $first ? ' active' : '';
+			echo "<button class='tablinks$activeClass' onclick=\"openTab(event, '$group')\">" . ucfirst($group) . "</button>";
+			$first = false;
 		}
-		echo "<button class=tablinks onclick=\"openTab(event, 'other')\">Other</button>";
-		echo "<button class=tablinks onclick=\"openTab(event, 'random')\" id=defaultOpen>Random</button>";
-		echo "</div>\n";
+		echo "<button class='tablinks' onclick=\"openTab(event, 'other')\">Other</button>";
+		echo "<button class='tablinks' onclick=\"openTab(event, 'random')\" id='defaultOpen'>Random</button>";
+		echo "</div>\n <br><br>";
 
 
+
+
+		
 		foreach ($sound_groups as $group) {
 			echo "<div id=$group class=tabcontent>\n";
 			echo "<div class=items>";
 			for ($i = 0; $i < $num_files; $i++) {
 				if (startsWith(strtolower($files[$i]), strtolower($group))) {
-					echo "<div class=item><a href=\"?page=audio&play=" . $files[$i] . "\">" . $files[$i] . "</a></div>";
+					$filename = pathinfo($files[$i], PATHINFO_FILENAME);
+					echo "<div class=item><a href=\"?page=audio&play=" . $files[$i] . "\">" . $filename . "</a></div>";
 				}
 			}
 			echo "</div>";
@@ -67,7 +78,8 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
 				}
 			}
 			if ($other) {
-				echo "<div class=audioitem><a href=\"?page=audio&play=" . $files[$i] . "\">" . $files[$i] . "</a></div>";
+				$filename = pathinfo($files[$i], PATHINFO_FILENAME);
+				echo "<div class=audioitem><a href=\"?page=audio&play=" . $files[$i] . "\">" . $filename . "</a></div>";
 			}
 		}
 		echo "</div>";
@@ -111,6 +123,4 @@ $sound_groups = array("alarm", "happy", "hum", "misc", "quote", "razz", "sad", "
         evt.currentTarget.className += " active";
     }
     document.getElementById("defaultOpen").click();
-
-
 </script>
