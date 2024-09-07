@@ -10,7 +10,7 @@
     <ul>
         <li><a href="?page=scripts">Scripting</a></li>
         <li><a href="?page=controller">Controller</a></li>
-        <li><a href="?page=configuration">Configuration</a></li>
+        <li><a href="?page=settings">Settings</a></li>
         <li><a href="?page=debug">Debug</a></li>
         <li><a href="?page=shutdown">Shutdown</a></li>
     </ul>

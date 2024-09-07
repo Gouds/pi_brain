@@ -1,5 +1,4 @@
 <?php include("config.php"); 
-$json = file_get_contents($site_url);
 ?>
 
     <style>

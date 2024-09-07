@@ -11,11 +11,6 @@
             "type": "output"
         },
         {
-            "id": 13,
-            "name": "Pin 3",
-            "type": "output"
-        },
-        {
             "id": 19,
             "name": "Pin 4",
             "type": "output"
