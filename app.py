@@ -219,67 +219,67 @@ async def close_servo(servo_name: str):
 # DOME ITEMS - MOTOR
 #######################
 
-
-import time
-
-
-
-# set up GPIO pins
-GPIO.setup(4, GPIO.OUT)  # Changed to GPIO4
-GPIO.setup(17, GPIO.OUT)  # Changed to GPIO17
-GPIO.setup(18, GPIO.OUT)  # Changed to GPIO18
-GPIO.setup(27, GPIO.OUT)  # Changed to GPIO27
-
-# Set the PWM pin and frequency
-pwm = GPIO.PWM(4, 100)  # Changed to GPIO4
-
-# Start PWM with 0% duty cycle (off)
-pwm.start(0)
-
-@app.get("/motor/forward/{speed}", tags=["TEST"])
-async def move_forward(speed: int):
-    # Drive the motor clockwise
-    GPIO.output(18, GPIO.HIGH)  # Changed to GPIO18
-    GPIO.output(17, GPIO.LOW)  # Changed to GPIO17
-
-    # Disable STBY (standby)
-    GPIO.output(27, GPIO.HIGH)  # Changed to GPIO27
-
-    # Ramp up the speed over 5 seconds
-    for duty_cycle in range(0, speed+1, 5):  # 0 to speed in steps of 5
-        pwm.ChangeDutyCycle(duty_cycle)
-        time.sleep(0.1)  # sleep 0.1 seconds
-
-    return {"message": f"Motor is running forward at {speed}% speed"}
-
-@app.get("/motor/backward/{speed}", tags=["TEST"])
-async def move_backward(speed: int):
-    # Drive the motor counter-clockwise
-    GPIO.output(18, GPIO.LOW)  # Changed to GPIO18
-    GPIO.output(17, GPIO.HIGH)  # Changed to GPIO17
-
-    # Disable STBY (standby)
-    GPIO.output(27, GPIO.HIGH)  # Changed to GPIO27
-
-    # Ramp up the speed over 5 seconds
-    for duty_cycle in range(0, speed+1, 5):  # 0 to speed in steps of 5
-        pwm.ChangeDutyCycle(duty_cycle)
-        time.sleep(0.1)  # sleep 0.1 seconds
-
-    return {"message": f"Motor is running backward at {speed}% speed"}
-
-@app.get("/motor/stop", tags=["TEST"])
-async def stop_motor():
-    # Set the duty cycle to 0 (off)
-    pwm.ChangeDutyCycle(0)
-
-    # Set all pins low
-    GPIO.output(4, GPIO.LOW)  # Changed to GPIO4
-    GPIO.output(17, GPIO.LOW)  # Changed to GPIO17
-    GPIO.output(18, GPIO.LOW)  # Changed to GPIO18
-    GPIO.output(27, GPIO.LOW)  # Changed to GPIO27
-
-    return {"message": "Motor stopped"}
+#
+#import time
+#
+#
+#
+## set up GPIO pins
+#GPIO.setup(4, GPIO.OUT)  # Changed to GPIO4
+#GPIO.setup(17, GPIO.OUT)  # Changed to GPIO17
+#GPIO.setup(18, GPIO.OUT)  # Changed to GPIO18
+#GPIO.setup(27, GPIO.OUT)  # Changed to GPIO27
+#
+## Set the PWM pin and frequency
+#pwm = GPIO.PWM(4, 100)  # Changed to GPIO4
+#
+## Start PWM with 0% duty cycle (off)
+#pwm.start(0)
+#
+#@app.get("/motor/forward/{speed}", tags=["TEST"])
+#async def move_forward(speed: int):
+#    # Drive the motor clockwise
+#    GPIO.output(18, GPIO.HIGH)  # Changed to GPIO18
+#    GPIO.output(17, GPIO.LOW)  # Changed to GPIO17
+#
+#    # Disable STBY (standby)
+#    GPIO.output(27, GPIO.HIGH)  # Changed to GPIO27
+#
+#    # Ramp up the speed over 5 seconds
+#    for duty_cycle in range(0, speed+1, 5):  # 0 to speed in steps of 5
+#        pwm.ChangeDutyCycle(duty_cycle)
+#        time.sleep(0.1)  # sleep 0.1 seconds
+#
+#   return {"message": f"Motor is running forward at {speed}% speed"}
+#
+#@app.get("/motor/backward/{speed}", tags=["TEST"])
+#async def move_backward(speed: int):
+#    # Drive the motor counter-clockwise
+#    GPIO.output(18, GPIO.LOW)  # Changed to GPIO18
+#    GPIO.output(17, GPIO.HIGH)  # Changed to GPIO17
+#
+#    # Disable STBY (standby)
+#    GPIO.output(27, GPIO.HIGH)  # Changed to GPIO27
+#
+#    # Ramp up the speed over 5 seconds
+#    for duty_cycle in range(0, speed+1, 5):  # 0 to speed in steps of 5
+#        pwm.ChangeDutyCycle(duty_cycle)
+#        time.sleep(0.1)  # sleep 0.1 seconds
+#
+ #   return {"message": f"Motor is running backward at {speed}% speed"}
+#
+#@app.get("/motor/stop", tags=["TEST"])
+#async def stop_motor():
+#    # Set the duty cycle to 0 (off)
+#    pwm.ChangeDutyCycle(0)
+#
+#    # Set all pins low
+#    GPIO.output(4, GPIO.LOW)  # Changed to GPIO4
+#    GPIO.output(17, GPIO.LOW)  # Changed to GPIO17
+#    GPIO.output(18, GPIO.LOW)  # Changed to GPIO18
+#    GPIO.output(27, GPIO.LOW)  # Changed to GPIO27
+#
+#    return {"message": "Motor stopped"}
 
 #######################
 # DOME ITEMS - SERVOS

@@ -16,30 +16,102 @@
     "servos": [
         {
             "id": 0,
-            "name": "servo1",
+            "name": "Panel01",
             "bus": "dome",
             "default_position": 2,
             "open_position": 2,
-            "close_position": 110,
-            "position": 100
+            "close_position": 150,
+            "position": 150
         },
         {
             "id": 1,
-            "name": "servo2",
+            "name": "Panel02",
             "bus": "dome",
             "default_position": 2,
             "open_position": 2,
             "close_position": 110,
-            "position": 2
+            "position": 70
         },
         {
             "id": 2,
-            "name": "servo3",
+            "name": "Panel03",
             "bus": "dome",
             "default_position": 2,
             "open_position": 2,
             "close_position": 110,
-            "position": 2
+            "position": 110
+        },
+        {
+            "id": 3,
+            "name": "Panel04",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 4,
+            "name": "Panel05",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 5,
+            "name": "Panel06",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 6,
+            "name": "Panel07",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 7,
+            "name": "Pie01",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 8,
+            "name": "Pie02",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 9,
+            "name": "Pie03",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
+        },
+        {
+            "id": 10,
+            "name": "Pie04",
+            "bus": "dome",
+            "default_position": 2,
+            "open_position": 2,
+            "close_position": 110,
+            "position": 110
         },
         {
             "id": 0,
