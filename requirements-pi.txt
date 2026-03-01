@@ -1,0 +1,8 @@
+# Pi Brain - Raspberry Pi hardware dependencies
+# Install in addition to requirements.txt when deploying to a Raspberry Pi.
+#
+#   pip install -r requirements.txt -r requirements-pi.txt
+
+RPi.GPIO
+adafruit-circuitpython-servokit
+pygame

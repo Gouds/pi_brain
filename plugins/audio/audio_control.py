@@ -1,5 +1,4 @@
 
-import pygame
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
@@ -12,8 +11,13 @@ import subprocess
 
 app = FastAPI()
 
-# Initialize pygame
-pygame.mixer.init()
+try:
+    import pygame
+    pygame.mixer.init()
+    _AUDIO_AVAILABLE = True
+except (ImportError, Exception) as e:
+    print(f"[DEV MODE] pygame not available ({e}) - audio playback will be mocked")
+    _AUDIO_AVAILABLE = False
 
 class AudioFile(BaseModel):
     filename: str
@@ -49,14 +53,14 @@ async def audio_list():
 async def audio_play(filename: str):
     try:
         filepath = os.path.join("audio", filename)
-        if os.path.exists(filepath):
-            # Load the audio file
-            pygame.mixer.music.load(filepath)
-            # Play the audio file
-            pygame.mixer.music.play()
-            return {"message": f"Playing audio file: {filename}"}
-        else:
+        if not os.path.exists(filepath):
             raise HTTPException(status_code=404, detail="Audio file not found")
+        if not _AUDIO_AVAILABLE:
+            print(f"[MOCK AUDIO] would play: {filename}")
+            return {"message": f"[DEV MODE] Would play: {filename}"}
+        pygame.mixer.music.load(filepath)
+        pygame.mixer.music.play()
+        return {"message": f"Playing audio file: {filename}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -85,14 +89,14 @@ async def audio_random_play(prefix_name: str):
         random_file = random.choice(filtered_files)
         
         filepath = os.path.join("audio", random_file)
-        if os.path.exists(filepath):
-            # Load the audio file
-            pygame.mixer.music.load(filepath)
-            # Play the audio file
-            pygame.mixer.music.play()
-            return {"message": f"Playing random audio file: {random_file}"}
-        else:
+        if not os.path.exists(filepath):
             raise HTTPException(status_code=404, detail="Audio file not found")
+        if not _AUDIO_AVAILABLE:
+            print(f"[MOCK AUDIO] would play random: {random_file}")
+            return {"message": f"[DEV MODE] Would play: {random_file}"}
+        pygame.mixer.music.load(filepath)
+        pygame.mixer.music.play()
+        return {"message": f"Playing random audio file: {random_file}"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

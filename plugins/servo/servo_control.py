@@ -1,7 +1,13 @@
-import board
-import busio
-from adafruit_servokit import ServoKit
 import json
+
+try:
+    import board
+    import busio
+    from adafruit_servokit import ServoKit
+except ImportError:
+    from mocks import board, busio
+    from mocks.servokit import ServoKit
+    print("[DEV MODE] Pi hardware not available - using mock servo hardware")
 
 # Initialize I2C bus and ServoKit
 i2c_bus = busio.I2C(board.SCL, board.SDA)

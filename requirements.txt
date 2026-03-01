@@ -1,0 +1,12 @@
+# Pi Brain - Python dependencies
+#
+# Development (desktop / non-Pi):
+#   pip install -r requirements.txt
+#
+# Raspberry Pi (production):
+#   pip install -r requirements.txt -r requirements-pi.txt
+
+fastapi
+uvicorn[standard]
+future
+aiohttp

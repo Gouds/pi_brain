@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 #from gpio_control import turn_on_pin, turn_off_pin
 #from pin_config import PinConfig
-from typing import List
+from typing import List, Dict
 import os
 from utils import mainconfig
 from plugins.audio.audio_control import audio_list, audio_play, audio_random_list, audio_random_play, get_volume, set_volume
@@ -16,7 +16,11 @@ from plugins.script.script_control import script_list, script_start_handler, run
 #import busio
 #from adafruit_servokit import ServoKit
 import json
-import RPi.GPIO as GPIO
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    from mocks import gpio as GPIO
+    print("[DEV MODE] RPi.GPIO not available - using mock GPIO")
 import subprocess
 
 
@@ -27,7 +31,7 @@ logdir = mainconfig.mainconfig['logdir']
 logfile = mainconfig.mainconfig['logfile']
 
 app = FastAPI(
-    title="Pi Brain", 
+    title="Pi Brain",
     version="0.5",
     description="Pi Brain is designed to control Raspberry Pi robots and droids. This is a platform that allows for easy control of multiple control systems including Servos, Audio, Motor Controls and a whole lot more. Its designed to be flexible and easy to use.  Pi Brain is driven by FastAPI and controlled by touch and control systems.",
     contact={
@@ -72,7 +76,11 @@ app = FastAPI(
         {
             "name": "System",
             "description": "Handles System Items.",
-        }
+        },
+        {
+            "name": "Admin",
+            "description": "Admin CRUD for servo and bus configuration.",
+        },
     ] )
 
 # Allow all origins to access the API
@@ -99,6 +107,21 @@ class PinControl(BaseModel):
 class PinConfiguration(BaseModel):
     pin: int
     mode: str
+
+class ServoConfig(BaseModel):
+    id: int
+    name: str
+    bus: str
+    default_position: int
+    open_position: int
+    close_position: int
+    position: int = 0
+
+class BusConfig(BaseModel):
+    name: str
+    address: str
+    scl_pin: str
+    sda_pin: str
 
 
 
@@ -579,6 +602,152 @@ async def shutdown_pi():
     # Execute the shutdown command using subprocess
     subprocess.run(["sudo", "shutdown", "-h", "now"])
     return {"message": "Shutting down Raspberry Pi"}
+
+
+SERVO_CONFIG_PATH = "configs/servo_config.json"
+
+def _load_servo_config():
+    with open(SERVO_CONFIG_PATH, "r") as f:
+        return json.load(f)
+
+def _save_servo_config(config):
+    with open(SERVO_CONFIG_PATH, "w") as f:
+        json.dump(config, f, indent=4)
+
+
+#######################
+# ADMIN ITEMS
+#######################
+
+@app.get("/admin/servos", tags=["Admin"])
+async def admin_get_servos():
+    return _load_servo_config()["servos"]
+
+@app.post("/admin/servos", tags=["Admin"])
+async def admin_add_servo(servo: ServoConfig):
+    config = _load_servo_config()
+    config["servos"].append(servo.model_dump())
+    _save_servo_config(config)
+    return config["servos"]
+
+@app.put("/admin/servos/{index}", tags=["Admin"])
+async def admin_update_servo(index: int, servo: ServoConfig):
+    config = _load_servo_config()
+    if index < 0 or index >= len(config["servos"]):
+        raise HTTPException(status_code=404, detail="Servo index out of range")
+    config["servos"][index] = servo.model_dump()
+    _save_servo_config(config)
+    return config["servos"]
+
+@app.delete("/admin/servos/{index}", tags=["Admin"])
+async def admin_delete_servo(index: int):
+    config = _load_servo_config()
+    if index < 0 or index >= len(config["servos"]):
+        raise HTTPException(status_code=404, detail="Servo index out of range")
+    config["servos"].pop(index)
+    _save_servo_config(config)
+    return config["servos"]
+
+@app.get("/admin/buses", tags=["Admin"])
+async def admin_get_buses():
+    return _load_servo_config()["i2c_buses"]
+
+@app.post("/admin/buses", tags=["Admin"])
+async def admin_add_bus(bus: BusConfig):
+    config = _load_servo_config()
+    config["i2c_buses"].append(bus.model_dump())
+    _save_servo_config(config)
+    return config["i2c_buses"]
+
+@app.put("/admin/buses/{index}", tags=["Admin"])
+async def admin_update_bus(index: int, bus: BusConfig):
+    config = _load_servo_config()
+    if index < 0 or index >= len(config["i2c_buses"]):
+        raise HTTPException(status_code=404, detail="Bus index out of range")
+    config["i2c_buses"][index] = bus.model_dump()
+    _save_servo_config(config)
+    return config["i2c_buses"]
+
+@app.delete("/admin/buses/{index}", tags=["Admin"])
+async def admin_delete_bus(index: int):
+    config = _load_servo_config()
+    if index < 0 or index >= len(config["i2c_buses"]):
+        raise HTTPException(status_code=404, detail="Bus index out of range")
+    config["i2c_buses"].pop(index)
+    _save_servo_config(config)
+    return config["i2c_buses"]
+
+
+#######################
+# PROFILES
+#######################
+
+PROFILES_CONFIG_PATH = "configs/profiles.json"
+
+def _load_profiles():
+    if not os.path.exists(PROFILES_CONFIG_PATH):
+        return []
+    with open(PROFILES_CONFIG_PATH, "r") as f:
+        return json.load(f)
+
+def _save_profiles(profiles):
+    with open(PROFILES_CONFIG_PATH, "w") as f:
+        json.dump(profiles, f, indent=4)
+
+class ProfileRobot(BaseModel):
+    name: str
+    api_url: str
+    features: List[str]
+
+class Profile(BaseModel):
+    id: str
+    label: str
+    layout: str
+    builtin: bool = False
+    colors: Dict[str, str]
+    robot: ProfileRobot
+
+@app.get("/profiles", tags=["Admin"])
+async def get_profiles():
+    return _load_profiles()
+
+@app.get("/profiles/{profile_id}", tags=["Admin"])
+async def get_profile(profile_id: str):
+    profiles = _load_profiles()
+    for p in profiles:
+        if p["id"] == profile_id:
+            return p
+    raise HTTPException(status_code=404, detail="Profile not found")
+
+@app.post("/profiles", tags=["Admin"])
+async def create_profile(profile: Profile):
+    if profile.builtin:
+        raise HTTPException(status_code=400, detail="Cannot create built-in profiles")
+    profiles = _load_profiles()
+    if any(p["id"] == profile.id for p in profiles):
+        raise HTTPException(status_code=409, detail="Profile ID already exists")
+    profiles.append(profile.model_dump())
+    _save_profiles(profiles)
+    return profile.model_dump()
+
+@app.put("/profiles/{profile_id}", tags=["Admin"])
+async def update_profile(profile_id: str, profile: Profile):
+    profiles = _load_profiles()
+    for i, p in enumerate(profiles):
+        if p["id"] == profile_id:
+            profiles[i] = profile.model_dump()
+            _save_profiles(profiles)
+            return profile.model_dump()
+    raise HTTPException(status_code=404, detail="Profile not found")
+
+@app.delete("/profiles/{profile_id}", tags=["Admin"])
+async def delete_profile(profile_id: str):
+    profiles = _load_profiles()
+    new_profiles = [p for p in profiles if p["id"] != profile_id]
+    if len(new_profiles) == len(profiles):
+        raise HTTPException(status_code=404, detail="Profile not found")
+    _save_profiles(new_profiles)
+    return {"deleted": profile_id}
 
 
 if __name__ == "__main__":

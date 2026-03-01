@@ -1,4 +1,3 @@
-import pygame
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query, BackgroundTasks
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel

@@ -1,0 +1,35 @@
+[
+    {
+        "id": "test",
+        "label": "test",
+        "layout": "sidebar",
+        "builtin": false,
+        "colors": {
+            "--bg-primary": "#0c0c0c",
+            "--bg-secondary": "#161616",
+            "--bg-tertiary": "#111111",
+            "--bg-surface": "#1e1e1e",
+            "--bg-hover": "#282828",
+            "--border": "#2a2a2a",
+            "--border-strong": "#404040",
+            "--accent": "#ffffff",
+            "--accent-dim": "rgba(255, 255, 255, 0.06)",
+            "--text-primary": "#f0f0f0",
+            "--text-secondary": "#666666",
+            "--text-muted": "#3a3a3a",
+            "--success": "pink",
+            "--danger": "#ef4444"
+        },
+        "robot": {
+            "name": "ress",
+            "api_url": "http://localhost:8000",
+            "features": [
+                "home",
+                "dome",
+                "body",
+                "audio",
+                "scripts"
+            ]
+        }
+    }
+]

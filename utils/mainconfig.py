@@ -4,11 +4,11 @@ import configparser
 import os
 standard_library.install_aliases()
 
-_configdir = '/home/pi/.r2_brain_config/'
+_configdir = os.environ.get('PI_BRAIN_CONFIG_DIR', os.path.expanduser('~/.pi_brain/'))
 if not os.path.exists(_configdir):
     os.makedirs(_configdir)
 _configfile = _configdir + 'main.cfg'
-_config = configparser.SafeConfigParser({'logtofile': True,
+_config = configparser.ConfigParser({'logtofile': True,
                                          'logdir': './logs',
                                          'logfile': 'debug.log',
                                          'busid': '1',
