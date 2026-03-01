@@ -19,6 +19,7 @@ import Profiles from './pages/Profiles.jsx'
 import Admin from './pages/admin/Admin.jsx'
 import EditServos from './pages/admin/EditServos.jsx'
 import EditBuses from './pages/admin/EditBuses.jsx'
+import AudioLibrary from './pages/AudioLibrary.jsx'
 
 import { ProfileContext } from './context/ProfileContext.js'
 import { useProfile } from './hooks/useProfile.js'
@@ -61,6 +62,7 @@ export default function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/servos" element={<EditServos />} />
                 <Route path="/admin/buses" element={<EditBuses />} />
+                <Route path="/audio-library" element={<AudioLibrary />} />
               </Routes>
             </div>
             {!isTouch && <SideMenu side="right" visible={menuState === 'right'} />}

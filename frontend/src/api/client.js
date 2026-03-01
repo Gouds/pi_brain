@@ -4,6 +4,10 @@ let _apiUrl = DEFAULT_API_URL
 export function setApiUrl(url) { _apiUrl = url }
 export function getApiUrl() { return _apiUrl }
 
+let _profileId = localStorage.getItem('pi-active-profile') ?? null
+export function setProfileId(id) { _profileId = id }
+export function getProfileId() { return _profileId }
+
 // ── Health ────────────────────────────────────────────────────────────────────
 export const getHealth = () =>
   fetch(`${_apiUrl}/health`).then(r => r.json())
@@ -100,3 +104,133 @@ export const adminDeleteBus = (index) =>
 // ── System ────────────────────────────────────────────────────────────────────
 export const shutdown = () =>
   fetch(`${_apiUrl}/shutdown`).then(r => r.json())
+
+// ── Profile-scoped Audio ──────────────────────────────────────────────────────
+export const profileGetAudioList = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/list`).then(r => r.json())
+
+export const profilePlayAudio = (filename, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/play/${encodeURIComponent(filename)}`).then(r => r.json())
+
+export const profilePlayRandomAudio = (prefix, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/random/${encodeURIComponent(prefix)}`).then(r => r.json())
+
+export const profileUploadAudio = (file, pid = _profileId) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return fetch(`${_apiUrl}/profiles/${pid}/audio/upload`, { method: 'POST', body: fd }).then(r => r.json())
+}
+
+export const profileDeleteAudio = (filename, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/${encodeURIComponent(filename)}`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Profile Audio Tags ────────────────────────────────────────────────────────
+export const profileGetAudioTags = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/tags`).then(r => r.json())
+
+export const profileSetAudioTag = (filename, category, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/tags/${encodeURIComponent(filename)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ category }),
+  }).then(r => r.json())
+
+export const profileClearAudioTag = (filename, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/tags/${encodeURIComponent(filename)}`, {
+    method: 'DELETE',
+  }).then(r => r.json())
+
+export const profileRenameAudio = (filename, newName, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/rename/${encodeURIComponent(filename)}?new_name=${encodeURIComponent(newName)}`, {
+    method: 'PUT',
+  }).then(r => r.json())
+
+// ── Profile Audio Categories ──────────────────────────────────────────────────
+export const profileGetAudioCategories = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/categories`).then(r => r.json())
+
+export const profileAddAudioCategory = (name, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/categories/${encodeURIComponent(name)}`, {
+    method: 'POST',
+  }).then(r => r.json())
+
+export const profileRenameAudioCategory = (oldName, newName, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/categories/${encodeURIComponent(oldName)}?new_name=${encodeURIComponent(newName)}`, {
+    method: 'PUT',
+  }).then(r => r.json())
+
+export const profileRemoveAudioCategory = (name, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/categories/${encodeURIComponent(name)}`, {
+    method: 'DELETE',
+  }).then(r => r.json())
+
+// ── Profile-scoped Scripts ────────────────────────────────────────────────────
+export const profileGetScriptList = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/scripts/list`).then(r => r.json())
+
+export const profileStartScript = (name, loop = 0, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/scripts/start/${encodeURIComponent(name)}/${loop}`).then(r => r.json())
+
+export const profileUploadScript = (file, pid = _profileId) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return fetch(`${_apiUrl}/profiles/${pid}/scripts/upload`, { method: 'POST', body: fd }).then(r => r.json())
+}
+
+export const profileDeleteScript = (filename, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/scripts/${encodeURIComponent(filename)}`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Profile-scoped Admin: Servos ──────────────────────────────────────────────
+export const profileAdminGetServos = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/servos`).then(r => r.json())
+
+export const profileAdminAddServo = (servo, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/servos`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(servo),
+  }).then(r => r.json())
+
+export const profileAdminUpdateServo = (index, servo, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/servos/${index}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(servo),
+  }).then(r => r.json())
+
+export const profileAdminDeleteServo = (index, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/servos/${index}`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Profile-scoped Admin: Buses ───────────────────────────────────────────────
+export const profileAdminGetBuses = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/buses`).then(r => r.json())
+
+export const profileAdminAddBus = (bus, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/buses`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bus),
+  }).then(r => r.json())
+
+export const profileAdminUpdateBus = (index, bus, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/buses/${index}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(bus),
+  }).then(r => r.json())
+
+export const profileAdminDeleteBus = (index, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/admin/buses/${index}`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Profile Image ─────────────────────────────────────────────────────────────
+export const profileGetImageUrl = (pid = _profileId) =>
+  `${_apiUrl}/profiles/${pid}/image`
+
+export const profileUploadImage = (file, pid = _profileId) => {
+  const fd = new FormData()
+  fd.append('file', file)
+  return fetch(`${_apiUrl}/profiles/${pid}/image`, { method: 'POST', body: fd }).then(r => r.json())
+}
+
+export const profileDeleteImage = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/image`, { method: 'DELETE' }).then(r => r.json())

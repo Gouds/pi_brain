@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query, BackgroundTasks
-from fastapi.responses import JSONResponse, PlainTextResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+import mimetypes
 from pydantic import BaseModel
 #from gpio_control import turn_on_pin, turn_off_pin
 #from pin_config import PinConfig
@@ -122,6 +123,9 @@ class BusConfig(BaseModel):
     address: str
     scl_pin: str
     sda_pin: str
+
+class AudioTagUpdate(BaseModel):
+    category: str
 
 
 
@@ -683,6 +687,72 @@ async def admin_delete_bus(index: int):
 #######################
 
 PROFILES_CONFIG_PATH = "configs/profiles.json"
+PROFILES_DIR = "profiles"
+
+def _profile_dir(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id)
+
+def _profile_audio_dir(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "audio")
+
+def _profile_scripts_dir(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "scripts")
+
+def _profile_servo_config_path(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "servo_config.json")
+
+def _ensure_profile_dirs(profile_id):
+    os.makedirs(_profile_audio_dir(profile_id), exist_ok=True)
+    os.makedirs(_profile_scripts_dir(profile_id), exist_ok=True)
+
+def _profile_audio_tags_path(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "audio_tags.json")
+
+def _profile_audio_categories_path(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "audio_categories.json")
+
+def _load_audio_categories(profile_id):
+    path = _profile_audio_categories_path(profile_id)
+    if not os.path.exists(path):
+        return []
+    with open(path) as f:
+        return json.load(f)
+
+def _save_audio_categories(profile_id, categories):
+    os.makedirs(_profile_dir(profile_id), exist_ok=True)
+    with open(_profile_audio_categories_path(profile_id), "w") as f:
+        json.dump(categories, f, indent=4)
+
+def _load_audio_tags(profile_id):
+    path = _profile_audio_tags_path(profile_id)
+    if not os.path.exists(path):
+        return {}
+    with open(path) as f:
+        return json.load(f)
+
+def _save_audio_tags(profile_id, tags):
+    os.makedirs(_profile_dir(profile_id), exist_ok=True)
+    with open(_profile_audio_tags_path(profile_id), "w") as f:
+        json.dump(tags, f, indent=4)
+
+def _load_profile_servo_config(profile_id):
+    path = _profile_servo_config_path(profile_id)
+    if not os.path.exists(path):
+        return {"i2c_buses": [], "servos": []}
+    with open(path) as f:
+        return json.load(f)
+
+def _save_profile_servo_config(profile_id, config):
+    os.makedirs(_profile_dir(profile_id), exist_ok=True)
+    with open(_profile_servo_config_path(profile_id), "w") as f:
+        json.dump(config, f, indent=4)
+
+def _find_profile_image(profile_id):
+    for ext in ('.png', '.jpg', '.jpeg', '.gif', '.webp'):
+        path = os.path.join(_profile_dir(profile_id), f"image{ext}")
+        if os.path.exists(path):
+            return path
+    return None
 
 def _load_profiles():
     if not os.path.exists(PROFILES_CONFIG_PATH):
@@ -748,6 +818,326 @@ async def delete_profile(profile_id: str):
         raise HTTPException(status_code=404, detail="Profile not found")
     _save_profiles(new_profiles)
     return {"deleted": profile_id}
+
+
+#######################
+# PROFILE-SCOPED AUDIO
+#######################
+
+@app.get("/profiles/{profile_id}/audio/list", tags=["Admin"])
+async def profile_audio_list(profile_id: str):
+    audio_dir = _profile_audio_dir(profile_id)
+    if not os.path.exists(audio_dir):
+        return []
+    files = sorted(f for f in os.listdir(audio_dir) if f.endswith((".mp3", ".wav", ".ogg")))
+    return files
+
+@app.get("/profiles/{profile_id}/audio/play/{filename}", tags=["Admin"])
+async def profile_audio_play(profile_id: str, filename: str):
+    from plugins.audio.audio_control import _AUDIO_AVAILABLE
+    try:
+        import pygame
+    except ImportError:
+        pygame = None
+    filepath = os.path.join(_profile_audio_dir(profile_id), filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    if not _AUDIO_AVAILABLE or pygame is None:
+        print(f"[MOCK AUDIO] would play: {filepath}")
+        return {"message": f"[DEV MODE] Would play: {filename}"}
+    pygame.mixer.music.load(filepath)
+    pygame.mixer.music.play()
+    return {"message": f"Playing audio file: {filename}"}
+
+@app.get("/profiles/{profile_id}/audio/random/{prefix}", tags=["Admin"])
+async def profile_audio_random(profile_id: str, prefix: str):
+    import random as _random
+    from plugins.audio.audio_control import _AUDIO_AVAILABLE
+    try:
+        import pygame
+    except ImportError:
+        pygame = None
+    audio_dir = _profile_audio_dir(profile_id)
+    if not os.path.exists(audio_dir):
+        raise HTTPException(status_code=404, detail="No audio files found")
+    files = [f for f in os.listdir(audio_dir) if f.lower().startswith(prefix.lower()) and f.endswith((".mp3", ".wav", ".ogg"))]
+    if not files:
+        raise HTTPException(status_code=404, detail="No matching audio files found")
+    chosen = _random.choice(files)
+    filepath = os.path.join(audio_dir, chosen)
+    if not _AUDIO_AVAILABLE or pygame is None:
+        print(f"[MOCK AUDIO] would play random: {chosen}")
+        return {"message": f"[DEV MODE] Would play: {chosen}"}
+    pygame.mixer.music.load(filepath)
+    pygame.mixer.music.play()
+    return {"message": f"Playing random audio file: {chosen}"}
+
+@app.post("/profiles/{profile_id}/audio/upload", tags=["Admin"])
+async def profile_audio_upload(profile_id: str, file: UploadFile = File(...)):
+    allowed = {".mp3", ".wav", ".ogg"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Only .mp3, .wav, .ogg allowed")
+    _ensure_profile_dirs(profile_id)
+    dest = os.path.join(_profile_audio_dir(profile_id), file.filename)
+    content = await file.read()
+    with open(dest, "wb") as f:
+        f.write(content)
+    return {"message": f"Uploaded {file.filename}"}
+
+@app.delete("/profiles/{profile_id}/audio/{filename}", tags=["Admin"])
+async def profile_audio_delete(profile_id: str, filename: str):
+    filepath = os.path.join(_profile_audio_dir(profile_id), filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+    os.remove(filepath)
+    return {"deleted": filename}
+
+@app.get("/profiles/{profile_id}/audio/tags", tags=["Admin"])
+async def profile_audio_get_tags(profile_id: str):
+    return _load_audio_tags(profile_id)
+
+@app.put("/profiles/{profile_id}/audio/tags/{filename}", tags=["Admin"])
+async def profile_audio_set_tag(profile_id: str, filename: str, update: AudioTagUpdate):
+    tags = _load_audio_tags(profile_id)
+    tags[filename] = update.category
+    _save_audio_tags(profile_id, tags)
+    return tags
+
+@app.delete("/profiles/{profile_id}/audio/tags/{filename}", tags=["Admin"])
+async def profile_audio_clear_tag(profile_id: str, filename: str):
+    tags = _load_audio_tags(profile_id)
+    tags.pop(filename, None)
+    _save_audio_tags(profile_id, tags)
+    return tags
+
+@app.get("/profiles/{profile_id}/audio/categories", tags=["Admin"])
+async def profile_audio_get_categories(profile_id: str):
+    return _load_audio_categories(profile_id)
+
+@app.post("/profiles/{profile_id}/audio/categories/{name}", tags=["Admin"])
+async def profile_audio_add_category(profile_id: str, name: str):
+    cats = _load_audio_categories(profile_id)
+    if name not in cats:
+        cats.append(name)
+        _save_audio_categories(profile_id, cats)
+    return cats
+
+@app.put("/profiles/{profile_id}/audio/categories/{old_name}", tags=["Admin"])
+async def profile_audio_rename_category(profile_id: str, old_name: str, new_name: str = Query(...)):
+    cats = _load_audio_categories(profile_id)
+    if old_name not in cats:
+        raise HTTPException(status_code=404, detail="Category not found")
+    cats = [new_name if c == old_name else c for c in cats]
+    _save_audio_categories(profile_id, cats)
+    tags = _load_audio_tags(profile_id)
+    if any(v == old_name for v in tags.values()):
+        for filename in tags:
+            if tags[filename] == old_name:
+                tags[filename] = new_name
+        _save_audio_tags(profile_id, tags)
+    return cats
+
+@app.delete("/profiles/{profile_id}/audio/categories/{name}", tags=["Admin"])
+async def profile_audio_remove_category(profile_id: str, name: str):
+    cats = _load_audio_categories(profile_id)
+    cats = [c for c in cats if c != name]
+    _save_audio_categories(profile_id, cats)
+    return cats
+
+@app.put("/profiles/{profile_id}/audio/rename/{filename}", tags=["Admin"])
+async def profile_audio_rename(profile_id: str, filename: str, new_name: str = Query(...)):
+    old_path = os.path.join(_profile_audio_dir(profile_id), filename)
+    if not os.path.exists(old_path):
+        raise HTTPException(status_code=404, detail="File not found")
+    new_path = os.path.join(_profile_audio_dir(profile_id), new_name)
+    os.rename(old_path, new_path)
+    tags = _load_audio_tags(profile_id)
+    if filename in tags:
+        tags[new_name] = tags.pop(filename)
+        _save_audio_tags(profile_id, tags)
+    return {"renamed": new_name}
+
+
+#######################
+# PROFILE-SCOPED SCRIPTS
+#######################
+
+@app.get("/profiles/{profile_id}/scripts/list", tags=["Admin"])
+async def profile_script_list(profile_id: str):
+    scripts_dir = _profile_scripts_dir(profile_id)
+    if not os.path.exists(scripts_dir):
+        return []
+    return sorted(f for f in os.listdir(scripts_dir) if f.endswith(".scr"))
+
+@app.post("/profiles/{profile_id}/scripts/upload", tags=["Admin"])
+async def profile_script_upload(profile_id: str, file: UploadFile = File(...)):
+    if not file.filename.endswith(".scr"):
+        raise HTTPException(status_code=400, detail="Only .scr files allowed")
+    _ensure_profile_dirs(profile_id)
+    dest = os.path.join(_profile_scripts_dir(profile_id), file.filename)
+    content = await file.read()
+    with open(dest, "wb") as f:
+        f.write(content)
+    return {"message": f"Uploaded {file.filename}"}
+
+@app.delete("/profiles/{profile_id}/scripts/{filename}", tags=["Admin"])
+async def profile_script_delete(profile_id: str, filename: str):
+    filepath = os.path.join(_profile_scripts_dir(profile_id), filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="File not found")
+    os.remove(filepath)
+    return {"deleted": filename}
+
+@app.get("/profiles/{profile_id}/scripts/start/{name}/{loop}", tags=["Admin"])
+async def profile_script_start(profile_id: str, name: str, loop: int, background_tasks: BackgroundTasks):
+    from plugins.script.script_control import run_script, running_scripts
+    import uuid as _uuid
+    script_path = os.path.join(_profile_scripts_dir(profile_id), f"{name}.scr")
+    if not os.path.exists(script_path):
+        raise HTTPException(status_code=404, detail=f"Script '{name}' not found")
+    script_id = str(_uuid.uuid4())
+
+    async def _run_profile_script(script_id, script_path, name, loop):
+        import aiohttp
+        running_scripts[script_id] = {"script_name": name, "status": "running"}
+        try:
+            with open(script_path) as f:
+                lines = f.readlines()
+            for line in lines:
+                if script_id not in running_scripts:
+                    break
+                parts = line.strip().split()
+                if not parts:
+                    continue
+                if parts[0] == "sleep":
+                    import asyncio as _asyncio
+                    await _asyncio.sleep(int(parts[1]))
+                elif parts[0] == "audio" and parts[1] == "play":
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"http://localhost:8000/profiles/{profile_id}/audio/play/{parts[2]}") as r:
+                            pass
+                elif parts[0] == "audio" and parts[1] == "random":
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"http://localhost:8000/profiles/{profile_id}/audio/random/{parts[2]}") as r:
+                            pass
+                elif parts[0] == "servo" and parts[1] == "position":
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"http://localhost:8000/servos/{parts[2]}/{parts[3]}/move?position={parts[4]}") as r:
+                            pass
+            if int(loop) == 1 and script_id in running_scripts:
+                await _run_profile_script(script_id, script_path, name, loop)
+        finally:
+            running_scripts.pop(script_id, None)
+
+    background_tasks.add_task(_run_profile_script, script_id, script_path, name, loop)
+    return {"script_id": script_id, "message": f"Script '{name}' execution started"}
+
+
+#######################
+# PROFILE-SCOPED ADMIN SERVOS
+#######################
+
+@app.get("/profiles/{profile_id}/admin/servos", tags=["Admin"])
+async def profile_admin_get_servos(profile_id: str):
+    return _load_profile_servo_config(profile_id)["servos"]
+
+@app.post("/profiles/{profile_id}/admin/servos", tags=["Admin"])
+async def profile_admin_add_servo(profile_id: str, servo: ServoConfig):
+    config = _load_profile_servo_config(profile_id)
+    config["servos"].append(servo.model_dump())
+    _save_profile_servo_config(profile_id, config)
+    return config["servos"]
+
+@app.put("/profiles/{profile_id}/admin/servos/{index}", tags=["Admin"])
+async def profile_admin_update_servo(profile_id: str, index: int, servo: ServoConfig):
+    config = _load_profile_servo_config(profile_id)
+    if index < 0 or index >= len(config["servos"]):
+        raise HTTPException(status_code=404, detail="Servo index out of range")
+    config["servos"][index] = servo.model_dump()
+    _save_profile_servo_config(profile_id, config)
+    return config["servos"]
+
+@app.delete("/profiles/{profile_id}/admin/servos/{index}", tags=["Admin"])
+async def profile_admin_delete_servo(profile_id: str, index: int):
+    config = _load_profile_servo_config(profile_id)
+    if index < 0 or index >= len(config["servos"]):
+        raise HTTPException(status_code=404, detail="Servo index out of range")
+    config["servos"].pop(index)
+    _save_profile_servo_config(profile_id, config)
+    return config["servos"]
+
+
+#######################
+# PROFILE-SCOPED ADMIN BUSES
+#######################
+
+@app.get("/profiles/{profile_id}/admin/buses", tags=["Admin"])
+async def profile_admin_get_buses(profile_id: str):
+    return _load_profile_servo_config(profile_id)["i2c_buses"]
+
+@app.post("/profiles/{profile_id}/admin/buses", tags=["Admin"])
+async def profile_admin_add_bus(profile_id: str, bus: BusConfig):
+    config = _load_profile_servo_config(profile_id)
+    config["i2c_buses"].append(bus.model_dump())
+    _save_profile_servo_config(profile_id, config)
+    return config["i2c_buses"]
+
+@app.put("/profiles/{profile_id}/admin/buses/{index}", tags=["Admin"])
+async def profile_admin_update_bus(profile_id: str, index: int, bus: BusConfig):
+    config = _load_profile_servo_config(profile_id)
+    if index < 0 or index >= len(config["i2c_buses"]):
+        raise HTTPException(status_code=404, detail="Bus index out of range")
+    config["i2c_buses"][index] = bus.model_dump()
+    _save_profile_servo_config(profile_id, config)
+    return config["i2c_buses"]
+
+@app.delete("/profiles/{profile_id}/admin/buses/{index}", tags=["Admin"])
+async def profile_admin_delete_bus(profile_id: str, index: int):
+    config = _load_profile_servo_config(profile_id)
+    if index < 0 or index >= len(config["i2c_buses"]):
+        raise HTTPException(status_code=404, detail="Bus index out of range")
+    config["i2c_buses"].pop(index)
+    _save_profile_servo_config(profile_id, config)
+    return config["i2c_buses"]
+
+
+#######################
+# PROFILE IMAGE
+#######################
+
+@app.post("/profiles/{profile_id}/image", tags=["Admin"])
+async def profile_image_upload(profile_id: str, file: UploadFile = File(...)):
+    allowed = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+    ext = os.path.splitext(file.filename)[1].lower()
+    if ext not in allowed:
+        raise HTTPException(status_code=400, detail="Only image files allowed (.png/.jpg/.jpeg/.gif/.webp)")
+    os.makedirs(_profile_dir(profile_id), exist_ok=True)
+    # Delete old image first
+    old = _find_profile_image(profile_id)
+    if old:
+        os.remove(old)
+    dest = os.path.join(_profile_dir(profile_id), f"image{ext}")
+    content = await file.read()
+    with open(dest, "wb") as f:
+        f.write(content)
+    return {"message": f"Image uploaded for profile {profile_id}"}
+
+@app.get("/profiles/{profile_id}/image", tags=["Admin"])
+async def profile_image_get(profile_id: str):
+    path = _find_profile_image(profile_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="No image found for this profile")
+    media_type, _ = mimetypes.guess_type(path)
+    return FileResponse(path, media_type=media_type or "application/octet-stream")
+
+@app.delete("/profiles/{profile_id}/image", tags=["Admin"])
+async def profile_image_delete(profile_id: str):
+    path = _find_profile_image(profile_id)
+    if not path:
+        raise HTTPException(status_code=404, detail="No image found for this profile")
+    os.remove(path)
+    return {"deleted": True}
 
 
 if __name__ == "__main__":

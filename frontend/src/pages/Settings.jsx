@@ -18,6 +18,11 @@ export default function Settings() {
         <Link to="/profiles">Manage Profiles</Link>
       </div>
 
+      <h3>Audio</h3>
+      <div className="settings-links">
+        <Link to="/audio-library">Audio Library</Link>
+      </div>
+
       <h3>Admin</h3>
       <div className="settings-links">
         <Link to="/admin">Servo &amp; Bus Config</Link>
