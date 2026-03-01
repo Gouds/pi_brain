@@ -124,6 +124,9 @@ export const profileUploadAudio = (file, pid = _profileId) => {
 export const profileDeleteAudio = (filename, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/audio/${encodeURIComponent(filename)}`, { method: 'DELETE' }).then(r => r.json())
 
+export const profileGetAudioFileUrl = (filename, pid = _profileId) =>
+  `${_apiUrl}/profiles/${pid}/audio/file/${encodeURIComponent(filename)}`
+
 // ── Profile Audio Tags ────────────────────────────────────────────────────────
 export const profileGetAudioTags = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/audio/tags`).then(r => r.json())

@@ -23,6 +23,7 @@ except ImportError:
     from mocks import gpio as GPIO
     print("[DEV MODE] RPi.GPIO not available - using mock GPIO")
 import subprocess
+import shutil
 
 
 
@@ -805,8 +806,15 @@ async def update_profile(profile_id: str, profile: Profile):
     profiles = _load_profiles()
     for i, p in enumerate(profiles):
         if p["id"] == profile_id:
+            if profile.id != profile_id and any(p2["id"] == profile.id for p2 in profiles):
+                raise HTTPException(status_code=409, detail="Profile ID already exists")
             profiles[i] = profile.model_dump()
             _save_profiles(profiles)
+            if profile.id != profile_id:
+                old_dir = _profile_dir(profile_id)
+                new_dir = _profile_dir(profile.id)
+                if os.path.exists(old_dir):
+                    os.rename(old_dir, new_dir)
             return profile.model_dump()
     raise HTTPException(status_code=404, detail="Profile not found")
 
@@ -817,6 +825,9 @@ async def delete_profile(profile_id: str):
     if len(new_profiles) == len(profiles):
         raise HTTPException(status_code=404, detail="Profile not found")
     _save_profiles(new_profiles)
+    profile_dir = _profile_dir(profile_id)
+    if os.path.exists(profile_dir):
+        shutil.rmtree(profile_dir)
     return {"deleted": profile_id}
 
 
@@ -832,6 +843,14 @@ async def profile_audio_list(profile_id: str):
     files = sorted(f for f in os.listdir(audio_dir) if f.endswith((".mp3", ".wav", ".ogg")))
     return files
 
+@app.get("/profiles/{profile_id}/audio/file/{filename}", tags=["Admin"])
+async def profile_audio_serve(profile_id: str, filename: str):
+    filepath = os.path.join(_profile_audio_dir(profile_id), filename)
+    if not os.path.exists(filepath):
+        raise HTTPException(status_code=404, detail="Audio file not found")
+    media_type, _ = mimetypes.guess_type(filepath)
+    return FileResponse(filepath, media_type=media_type or "audio/mpeg")
+
 @app.get("/profiles/{profile_id}/audio/play/{filename}", tags=["Admin"])
 async def profile_audio_play(profile_id: str, filename: str):
     from plugins.audio.audio_control import _AUDIO_AVAILABLE
@@ -844,10 +863,10 @@ async def profile_audio_play(profile_id: str, filename: str):
         raise HTTPException(status_code=404, detail="Audio file not found")
     if not _AUDIO_AVAILABLE or pygame is None:
         print(f"[MOCK AUDIO] would play: {filepath}")
-        return {"message": f"[DEV MODE] Would play: {filename}"}
+        return {"played": False, "filename": filename, "message": f"[DEV MODE] Would play: {filename}"}
     pygame.mixer.music.load(filepath)
     pygame.mixer.music.play()
-    return {"message": f"Playing audio file: {filename}"}
+    return {"played": True, "filename": filename, "message": f"Playing audio file: {filename}"}
 
 @app.get("/profiles/{profile_id}/audio/random/{prefix}", tags=["Admin"])
 async def profile_audio_random(profile_id: str, prefix: str):
@@ -867,10 +886,10 @@ async def profile_audio_random(profile_id: str, prefix: str):
     filepath = os.path.join(audio_dir, chosen)
     if not _AUDIO_AVAILABLE or pygame is None:
         print(f"[MOCK AUDIO] would play random: {chosen}")
-        return {"message": f"[DEV MODE] Would play: {chosen}"}
+        return {"played": False, "filename": chosen, "message": f"[DEV MODE] Would play: {chosen}"}
     pygame.mixer.music.load(filepath)
     pygame.mixer.music.play()
-    return {"message": f"Playing random audio file: {chosen}"}
+    return {"played": True, "filename": chosen, "message": f"Playing random audio file: {chosen}"}
 
 @app.post("/profiles/{profile_id}/audio/upload", tags=["Admin"])
 async def profile_audio_upload(profile_id: str, file: UploadFile = File(...)):

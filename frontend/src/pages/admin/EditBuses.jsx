@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react'
-import { adminGetBuses, adminAddBus, adminUpdateBus, adminDeleteBus } from '../../api/client.js'
+import { useState, useEffect, useContext } from 'react'
+import {
+  profileAdminGetBuses   as adminGetBuses,
+  profileAdminAddBus     as adminAddBus,
+  profileAdminUpdateBus  as adminUpdateBus,
+  profileAdminDeleteBus  as adminDeleteBus,
+} from '../../api/client.js'
+import { ProfileContext } from '../../context/ProfileContext.js'
 
 const BLANK = { name: '', address: '', scl_pin: '', sda_pin: '' }
 
 export default function EditBuses() {
+  const { activeProfile } = useContext(ProfileContext)
   const [buses, setBuses] = useState([])
   const [form, setForm] = useState(BLANK)
   const [editIndex, setEditIndex] = useState(null)
@@ -12,7 +19,7 @@ export default function EditBuses() {
     adminGetBuses().then(setBuses).catch(() => {})
   }
 
-  useEffect(load, [])
+  useEffect(load, [activeProfile?.id])
 
   function handleFormChange(e) {
     const { name, value } = e.target

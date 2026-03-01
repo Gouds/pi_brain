@@ -5,6 +5,7 @@ import {
   profilePlayRandomAudio,
   profileGetAudioTags,
   profileGetAudioCategories,
+  profileGetAudioFileUrl,
 } from '../api/client.js'
 import { ProfileContext } from '../context/ProfileContext.js'
 
@@ -98,14 +99,21 @@ export default function Audio() {
   const hasOther = (categorised['other']?.length ?? 0) > 0
   const tabs = ['all', ...categories, ...(hasOther ? ['other'] : [])]
 
-  function handlePlay(filename) {
+  async function handlePlay(filename) {
     setPlaying(filename)
-    profilePlayAudio(filename).catch(() => {})
+    const result = await profilePlayAudio(filename).catch(() => null)
+    if (!result?.played) {
+      new window.Audio(profileGetAudioFileUrl(filename)).play().catch(() => {})
+    }
   }
 
-  function handleRandom(category) {
-    setPlaying(`random:${category}`)
-    profilePlayRandomAudio(category).catch(() => {})
+  async function handleRandom(category) {
+    const result = await profilePlayRandomAudio(category).catch(() => null)
+    const filename = result?.filename ?? null
+    setPlaying(filename ?? `random:${category}`)
+    if (!result?.played && filename) {
+      new window.Audio(profileGetAudioFileUrl(filename)).play().catch(() => {})
+    }
   }
 
   function renderCardGrid(fileList) {

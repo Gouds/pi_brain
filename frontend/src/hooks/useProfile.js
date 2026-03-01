@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BUILTIN_PROFILES } from '../profiles/builtins.js'
 import { getProfiles } from '../api/profiles.js'
-import { setApiUrl } from '../api/client.js'
+import { setApiUrl, setProfileId } from '../api/client.js'
 
 export function useProfile() {
   const [userProfiles, setUserProfiles] = useState([])
@@ -67,8 +67,9 @@ export function useProfile() {
     document.querySelector('.wrapper')?.setAttribute('data-layout', layout)
     document.body.setAttribute('data-layout', layout)
 
-    // Update API URL
+    // Update API URL and profile ID
     setApiUrl(activeProfile.robot.api_url)
+    setProfileId(activeProfile.id)
 
     // Persist active profile ID
     localStorage.setItem('pi-active-profile', activeProfile.id)

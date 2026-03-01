@@ -1,9 +1,16 @@
-import { useState, useEffect } from 'react'
-import { adminGetServos, adminAddServo, adminUpdateServo, adminDeleteServo } from '../../api/client.js'
+import { useState, useEffect, useContext } from 'react'
+import {
+  profileAdminGetServos   as adminGetServos,
+  profileAdminAddServo    as adminAddServo,
+  profileAdminUpdateServo as adminUpdateServo,
+  profileAdminDeleteServo as adminDeleteServo,
+} from '../../api/client.js'
+import { ProfileContext } from '../../context/ProfileContext.js'
 
 const BLANK = { id: 0, name: '', bus: '', default_position: 0, open_position: 0, close_position: 0, position: 0 }
 
 export default function EditServos() {
+  const { activeProfile } = useContext(ProfileContext)
   const [servos, setServos] = useState([])
   const [form, setForm] = useState(BLANK)
   const [editIndex, setEditIndex] = useState(null)
@@ -12,7 +19,7 @@ export default function EditServos() {
     adminGetServos().then(setServos).catch(() => {})
   }
 
-  useEffect(load, [])
+  useEffect(load, [activeProfile?.id])
 
   function handleFormChange(e) {
     const { name, value } = e.target

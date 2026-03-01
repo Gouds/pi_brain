@@ -2,6 +2,7 @@ import { useContext, useState, useRef } from 'react'
 import { ProfileContext } from '../context/ProfileContext.js'
 import { BUILTIN_PROFILES } from '../profiles/builtins.js'
 import { createProfile, updateProfile, deleteProfile } from '../api/profiles.js'
+import { profileUploadImage, profileDeleteImage, profileGetImageUrl } from '../api/client.js'
 
 const REQUIRED_COLOR_KEYS = [
   '--bg-primary', '--bg-secondary', '--bg-tertiary', '--bg-surface', '--bg-hover',
@@ -19,7 +20,7 @@ const EMPTY_FORM = {
   robot_name: '',
   api_url: 'http://localhost:8000',
   features: [...ALL_FEATURES],
-  base_profile_id: 'dark',
+  base_style_id: 'dark',
 }
 
 function ColorField({ name, value, onChange }) {
@@ -53,12 +54,93 @@ function validateImport(data) {
   return null
 }
 
-/* ── Profile Card ─────────────────────────────────────────────────────────── */
+/* ── Style Tile ───────────────────────────────────────────────────────────── */
 
-function ProfileCard({ profile, isActive, onActivate, onEdit, onDelete, onExport }) {
+const SWATCH_KEYS = ['--bg-primary', '--bg-secondary', '--accent', '--text-primary', '--border-strong']
+
+function StyleTile({ style, onUseAsTemplate }) {
+  return (
+    <div style={{
+      border: '1px solid var(--border)',
+      padding: '0.6rem 0.75rem',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '0.4rem',
+    }}>
+      <div style={{ display: 'flex', gap: 4 }}>
+        {SWATCH_KEYS.map(key => (
+          <div
+            key={key}
+            title={key}
+            style={{
+              width: 14, height: 14,
+              background: style.colors[key],
+              border: '1px solid rgba(128,128,128,0.3)',
+              flexShrink: 0,
+            }}
+          />
+        ))}
+      </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <span style={{ fontSize: 12, color: 'var(--text-primary)', fontWeight: 600 }}>
+          {style.label}
+        </span>
+        <span style={{
+          fontSize: 9,
+          padding: '1px 5px',
+          border: '1px solid var(--border-strong)',
+          color: 'var(--text-secondary)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+        }}>
+          {style.layout}
+        </span>
+      </div>
+      <button
+        style={{
+          background: 'transparent',
+          border: '1px solid var(--border-strong)',
+          color: 'var(--text-secondary)',
+          padding: '2px 8px',
+          cursor: 'pointer',
+          fontSize: 11,
+          fontFamily: 'var(--font-ui)',
+          alignSelf: 'flex-start',
+        }}
+        onClick={() => onUseAsTemplate(style.id)}
+      >
+        Use as template
+      </button>
+    </div>
+  )
+}
+
+/* ── Robot Card ───────────────────────────────────────────────────────────── */
+
+function RobotCard({ profile, isActive, onActivate, onEdit, onDelete, onExport }) {
   const cardStyle = isActive
     ? { border: '1px solid var(--accent)', background: 'var(--accent-dim)' }
     : { border: '1px solid var(--border)' }
+
+  const imgRef = useRef(null)
+  const [imgKey, setImgKey] = useState(0)
+  const [imgError, setImgError] = useState(false)
+
+  function handleImageUpload(e) {
+    const file = e.target.files?.[0]
+    if (!file) return
+    profileUploadImage(file, profile.id)
+      .then(() => { setImgError(false); setImgKey(k => k + 1) })
+      .catch(() => {})
+    e.target.value = ''
+  }
+
+  function handleImageDelete() {
+    if (!confirm('Delete robot image?')) return
+    profileDeleteImage(profile.id)
+      .then(() => setImgError(true))
+      .catch(() => {})
+  }
 
   return (
     <div style={{
@@ -83,36 +165,24 @@ function ProfileCard({ profile, isActive, onActivate, onEdit, onDelete, onExport
         }}>
           {profile.layout}
         </span>
-        {profile.builtin && (
-          <span style={{
-            fontSize: 10,
-            padding: '1px 6px',
-            border: '1px solid var(--border)',
-            color: 'var(--text-muted)',
-            textTransform: 'uppercase',
-            letterSpacing: '0.05em',
-          }}>
-            built-in
-          </span>
-        )}
       </div>
       <div style={{ fontSize: 11, color: 'var(--text-secondary)' }}>
         {profile.robot.name} — {profile.robot.api_url}
       </div>
       <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.2rem', flexWrap: 'wrap' }}>
-        {!isActive && (
+        {!isActive ? (
           <button className="btn-save" onClick={() => onActivate(profile.id)}>Activate</button>
-        )}
-        {isActive && (
+        ) : (
           <span style={{ fontSize: 11, color: 'var(--accent)', alignSelf: 'center' }}>✓ Active</span>
         )}
-        {!profile.builtin && (
-          <button className="btn-save" style={{ borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}
-            onClick={() => onEdit(profile)}>Edit</button>
-        )}
-        {!profile.builtin && (
-          <button className="btn-danger" onClick={() => onDelete(profile.id)}>Delete</button>
-        )}
+        <button
+          className="btn-save"
+          style={{ borderColor: 'var(--border-strong)', color: 'var(--text-secondary)' }}
+          onClick={() => onEdit(profile)}
+        >
+          Edit
+        </button>
+        <button className="btn-danger" onClick={() => onDelete(profile.id)}>Delete</button>
         <button
           style={{
             background: 'transparent',
@@ -128,13 +198,33 @@ function ProfileCard({ profile, isActive, onActivate, onEdit, onDelete, onExport
           Export JSON
         </button>
       </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.25rem' }}>
+        {!imgError && (
+          <img
+            key={imgKey}
+            src={`${profileGetImageUrl(profile.id)}?t=${imgKey}`}
+            alt="Robot"
+            onError={() => setImgError(true)}
+            style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }}
+          />
+        )}
+        <input ref={imgRef} type="file" accept=".png,.jpg,.jpeg,.gif,.webp" style={{ display: 'none' }} onChange={handleImageUpload} />
+        <button style={{ fontSize: 11, padding: '2px 8px' }} onClick={() => imgRef.current?.click()}>
+          {imgError ? 'Upload Image' : 'Change Image'}
+        </button>
+        {!imgError && (
+          <button className="btn-danger" style={{ fontSize: 11, padding: '2px 8px' }} onClick={handleImageDelete}>
+            Remove Image
+          </button>
+        )}
+      </div>
     </div>
   )
 }
 
-/* ── Profile Form ─────────────────────────────────────────────────────────── */
+/* ── Robot Form ───────────────────────────────────────────────────────────── */
 
-function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
+function RobotForm({ editingProfile, initialStyleId = 'dark', onSave, onCancel }) {
   const { wideMode } = useContext(ProfileContext)
   const isEdit = Boolean(editingProfile)
   const [form, setForm] = useState(() => {
@@ -146,12 +236,12 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
         robot_name: editingProfile.robot.name,
         api_url: editingProfile.robot.api_url,
         features: [...editingProfile.robot.features],
-        base_profile_id: 'dark',
+        base_style_id: initialStyleId,
         colors: { ...editingProfile.colors },
       }
     }
-    const baseProfile = allProfiles.find(p => p.id === 'dark') ?? allProfiles[0]
-    return { ...EMPTY_FORM, colors: { ...(baseProfile?.colors ?? {}) } }
+    const base = BUILTIN_PROFILES.find(p => p.id === initialStyleId) ?? BUILTIN_PROFILES[0]
+    return { ...EMPTY_FORM, base_style_id: base.id, layout: base.layout, colors: { ...base.colors } }
   })
   const [idManual, setIdManual] = useState(isEdit)
   const [error, setError] = useState('')
@@ -159,11 +249,7 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
 
   function handleLabelChange(e) {
     const label = e.target.value
-    setForm(f => ({
-      ...f,
-      label,
-      id: idManual ? f.id : slugify(label),
-    }))
+    setForm(f => ({ ...f, label, id: idManual ? f.id : slugify(label) }))
   }
 
   function handleIdChange(e) {
@@ -190,10 +276,6 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
       setError('Label is required')
       return
     }
-    if (!isEdit && allProfiles.some(p => p.id === form.id)) {
-      setError('ID already taken — choose a different one')
-      return
-    }
 
     const payload = {
       id: form.id,
@@ -216,7 +298,7 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
         await createProfile(payload)
       }
       onSave(form.id)
-    } catch (err) {
+    } catch {
       setError('Save failed — check the backend is running')
     } finally {
       setSaving(false)
@@ -225,7 +307,7 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
 
   return (
     <div>
-      <h2>{isEdit ? 'Edit Profile' : 'New Profile'}</h2>
+      <h2>{isEdit ? 'Edit Robot' : 'New Robot'}</h2>
 
       {error && (
         <p style={{ color: 'var(--danger)', fontSize: 12, margin: '0 0 0.5rem 0' }}>{error}</p>
@@ -235,11 +317,11 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
         <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Label</div>
-            <input value={form.label} onChange={handleLabelChange} placeholder="My Profile" style={{ width: 160 }} />
+            <input value={form.label} onChange={handleLabelChange} placeholder="R2-D2" style={{ width: 160 }} />
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>ID</div>
-            <input value={form.id} onChange={handleIdChange} placeholder="my-profile" style={{ width: 130 }} />
+            <input value={form.id} onChange={handleIdChange} placeholder="r2-d2" style={{ width: 130 }} />
           </div>
         </div>
 
@@ -272,8 +354,7 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             {ALL_FEATURES.map(feat => (
               <label key={feat} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12 }}>
-                <input type="checkbox" checked={form.features.includes(feat)}
-                  onChange={() => toggleFeature(feat)} />
+                <input type="checkbox" checked={form.features.includes(feat)} onChange={() => toggleFeature(feat)} />
                 {feat}
               </label>
             ))}
@@ -282,13 +363,13 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
 
         {!isEdit && (
           <div style={{ marginTop: '0.4rem' }}>
-            <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Base Colours (clone from)</div>
+            <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Style</div>
             <select
-              value={form.base_profile_id}
+              value={form.base_style_id}
               onChange={e => {
-                const baseId = e.target.value
-                const base = allProfiles.find(p => p.id === baseId)
-                setForm(f => ({ ...f, base_profile_id: baseId, colors: { ...(base?.colors ?? f.colors) } }))
+                const styleId = e.target.value
+                const style = BUILTIN_PROFILES.find(p => p.id === styleId)
+                setForm(f => ({ ...f, base_style_id: styleId, layout: style?.layout ?? f.layout, colors: { ...(style?.colors ?? f.colors) } }))
               }}
               style={{
                 background: 'var(--bg-surface)',
@@ -300,8 +381,8 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
                 outline: 'none',
               }}
             >
-              {allProfiles.map(p => (
-                <option key={p.id} value={p.id}>{p.label}</option>
+              {BUILTIN_PROFILES.map(s => (
+                <option key={s.id} value={s.id}>{s.label}</option>
               ))}
             </select>
           </div>
@@ -335,10 +416,19 @@ function ProfileForm({ editingProfile, allProfiles, onSave, onCancel }) {
 
 export default function Profiles() {
   const { activeProfile, allProfiles, activateProfile, refreshUserProfiles } = useContext(ProfileContext)
+  const userProfiles = allProfiles.filter(p => !p.builtin)
+
   const [view, setView] = useState('list') // 'list' | 'form'
   const [editingProfile, setEditingProfile] = useState(null)
+  const [initialStyleId, setInitialStyleId] = useState('dark')
   const [importError, setImportError] = useState('')
   const fileInputRef = useRef()
+
+  function openNewRobot(styleId = 'dark') {
+    setInitialStyleId(styleId)
+    setEditingProfile(null)
+    setView('form')
+  }
 
   function handleActivate(id) {
     activateProfile(id)
@@ -346,15 +436,16 @@ export default function Profiles() {
 
   function handleEdit(profile) {
     setEditingProfile(profile)
+    setInitialStyleId('dark')
     setView('form')
   }
 
   async function handleDelete(id) {
-    if (!confirm(`Delete profile "${id}"?`)) return
+    if (!confirm(`Delete robot "${id}"?`)) return
     try {
       await deleteProfile(id)
       await refreshUserProfiles()
-      if (activeProfile?.id === id) activateProfile('dark')
+      if (activeProfile?.id === id) activateProfile(userProfiles.find(p => p.id !== id)?.id ?? 'dark')
     } catch {
       alert('Delete failed — check the backend is running')
     }
@@ -411,12 +502,12 @@ export default function Profiles() {
 
     const isBuiltin = BUILTIN_PROFILES.some(p => p.id === data.id)
     if (isBuiltin) {
-      setImportError(`Cannot import over built-in profile "${data.id}"`)
+      setImportError(`Cannot import over built-in style "${data.id}"`)
       return
     }
 
-    const existingUser = allProfiles.find(p => !p.builtin && p.id === data.id)
-    if (existingUser && !confirm(`Profile "${data.id}" already exists. Overwrite?`)) return
+    const existingUser = userProfiles.find(p => p.id === data.id)
+    if (existingUser && !confirm(`Robot "${data.id}" already exists. Overwrite?`)) return
 
     try {
       if (existingUser) {
@@ -434,9 +525,9 @@ export default function Profiles() {
 
   if (view === 'form') {
     return (
-      <ProfileForm
+      <RobotForm
         editingProfile={editingProfile}
-        allProfiles={allProfiles}
+        initialStyleId={initialStyleId}
         onSave={handleSaveForm}
         onCancel={handleCancelForm}
       />
@@ -445,14 +536,29 @@ export default function Profiles() {
 
   return (
     <div>
+      {/* ── Styles ── */}
+      <h3 style={{ margin: '0 0 0.5rem 0', fontSize: 13, textTransform: 'uppercase',
+        letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+        Styles
+      </h3>
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+        gap: '0.5rem',
+        marginBottom: '1.5rem',
+      }}>
+        {BUILTIN_PROFILES.map(style => (
+          <StyleTile key={style.id} style={style} onUseAsTemplate={openNewRobot} />
+        ))}
+      </div>
+
+      {/* ── Robots ── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-        <h2 style={{ margin: 0 }}>Profiles</h2>
-        <button
-          className="btn-save"
-          onClick={() => { setEditingProfile(null); setView('form') }}
-        >
-          New Profile
-        </button>
+        <h3 style={{ margin: 0, fontSize: 13, textTransform: 'uppercase',
+          letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+          Your Robots
+        </h3>
+        <button className="btn-save" onClick={() => openNewRobot()}>New Robot</button>
         <button
           style={{
             background: 'transparent',
@@ -480,8 +586,14 @@ export default function Profiles() {
         <p style={{ color: 'var(--danger)', fontSize: 12, margin: '0 0 0.5rem 0' }}>{importError}</p>
       )}
 
-      {allProfiles.map(profile => (
-        <ProfileCard
+      {userProfiles.length === 0 && (
+        <p style={{ color: 'var(--text-muted)', fontSize: 12, margin: '0.5rem 0' }}>
+          No robots yet. Pick a style above or click New Robot to get started.
+        </p>
+      )}
+
+      {userProfiles.map(profile => (
+        <RobotCard
           key={profile.id}
           profile={profile}
           isActive={activeProfile?.id === profile.id}
