@@ -30,6 +30,7 @@ export default function Settings() {
 
       <h3>System</h3>
       <div className="settings-links">
+        <Link to="/simulation">Simulation</Link>
         <Link to="/debug">Debug</Link>
         <Link to="/shutdown">Shutdown</Link>
       </div>

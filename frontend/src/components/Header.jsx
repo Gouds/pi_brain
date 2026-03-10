@@ -158,6 +158,7 @@ const PAGE_TITLES = {
   '/admin/servos': 'Edit Servos',
   '/admin/buses': 'Edit Buses',
   '/audio-library': 'Audio Library',
+  '/simulation': 'Simulation',
 }
 
 export default function Header({ onMenuToggle, onVolumeOpen }) {

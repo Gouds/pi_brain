@@ -739,7 +739,8 @@ def _save_audio_tags(profile_id, tags):
 def _load_profile_servo_config(profile_id):
     path = _profile_servo_config_path(profile_id)
     if not os.path.exists(path):
-        return {"i2c_buses": [], "servos": []}
+        # Fall back to global servo config until a profile-specific one is saved
+        return {"i2c_buses": list(servo_config.get("i2c_buses", [])), "servos": list(servo_config.get("servos", []))}
     with open(path) as f:
         return json.load(f)
 
@@ -850,6 +851,18 @@ async def profile_audio_serve(profile_id: str, filename: str):
         raise HTTPException(status_code=404, detail="Audio file not found")
     media_type, _ = mimetypes.guess_type(filepath)
     return FileResponse(filepath, media_type=media_type or "audio/mpeg")
+
+@app.get("/profiles/{profile_id}/audio/stop", tags=["Admin"])
+async def profile_audio_stop(profile_id: str):
+    from plugins.audio.audio_control import _AUDIO_AVAILABLE
+    try:
+        import pygame
+    except ImportError:
+        pygame = None
+    if _AUDIO_AVAILABLE and pygame is not None:
+        pygame.mixer.music.stop()
+        return {"stopped": True}
+    return {"stopped": False, "message": "[DEV MODE] No audio to stop"}
 
 @app.get("/profiles/{profile_id}/audio/play/{filename}", tags=["Admin"])
 async def profile_audio_play(profile_id: str, filename: str):
@@ -1119,6 +1132,49 @@ async def profile_admin_delete_bus(profile_id: str, index: int):
     config["i2c_buses"].pop(index)
     _save_profile_servo_config(profile_id, config)
     return config["i2c_buses"]
+
+
+#######################
+# PROFILE-SCOPED SERVO CONTROL
+#######################
+
+@app.get("/profiles/{profile_id}/servo/open/{servo_name}", tags=["Admin"])
+async def profile_servo_open(profile_id: str, servo_name: str):
+    config = _load_profile_servo_config(profile_id)
+    for servo in config["servos"]:
+        if servo["name"] == servo_name:
+            if servo["bus"] in i2c_servo_controls:
+                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], servo["open_position"])
+            servo["position"] = servo["open_position"]
+            _save_profile_servo_config(profile_id, config)
+            return {"message": f"Opened {servo_name}", "position": servo["open_position"]}
+    raise HTTPException(status_code=404, detail="Servo not found")
+
+@app.get("/profiles/{profile_id}/servo/close/{servo_name}", tags=["Admin"])
+async def profile_servo_close(profile_id: str, servo_name: str):
+    config = _load_profile_servo_config(profile_id)
+    for servo in config["servos"]:
+        if servo["name"] == servo_name:
+            if servo["bus"] in i2c_servo_controls:
+                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], servo["close_position"])
+            servo["position"] = servo["close_position"]
+            _save_profile_servo_config(profile_id, config)
+            return {"message": f"Closed {servo_name}", "position": servo["close_position"]}
+    raise HTTPException(status_code=404, detail="Servo not found")
+
+@app.get("/profiles/{profile_id}/servo/{servo_name}/move/{angle}", tags=["Admin"])
+async def profile_servo_move(profile_id: str, servo_name: str, angle: int):
+    if angle < 0 or angle > 180:
+        raise HTTPException(status_code=400, detail="Angle must be 0-180")
+    config = _load_profile_servo_config(profile_id)
+    for servo in config["servos"]:
+        if servo["name"] == servo_name:
+            if servo["bus"] in i2c_servo_controls:
+                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], angle)
+            servo["position"] = angle
+            _save_profile_servo_config(profile_id, config)
+            return {"message": f"Moved {servo_name} to {angle}°", "position": angle}
+    raise HTTPException(status_code=404, detail="Servo not found")
 
 
 #######################

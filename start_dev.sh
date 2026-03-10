@@ -1,6 +1,6 @@
 #!/bin/bash
 # Pi Brain - development server startup
-# Runs the FastAPI backend (port 8000) and the React/Vite frontend (port 5173)
+# Runs the FastAPI backend (port 8000) and the React/Vite frontend (port 8100)
 # with hot reload. Hardware libraries are mocked automatically when not on a Pi.
 
 set -e
@@ -55,7 +55,7 @@ echo ""
 echo "  Backend API:   http://localhost:8000"
 echo "  API docs:      http://localhost:8000/docs"
 echo "  Redoc:         http://localhost:8000/redoc"
-echo "  Frontend:      http://localhost:5173"
+echo "  Frontend:      http://localhost:8100"
 echo ""
 echo "  Press Ctrl+C to stop both servers."
 echo ""

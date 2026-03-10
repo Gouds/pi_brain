@@ -1,8 +1,9 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useContext, useRef } from 'react'
 import {
   profileGetAudioList,
   profilePlayAudio,
   profilePlayRandomAudio,
+  profileStopAudio,
   profileGetAudioTags,
   profileGetAudioCategories,
   profileGetAudioFileUrl,
@@ -74,6 +75,7 @@ export default function Audio() {
   const [categories, setCategories] = useState([])
   const [activeTab, setActiveTab] = useState('all')
   const [playing, setPlaying] = useState(null)
+  const audioRef = useRef(null)
 
   useEffect(() => {
     if (!activeProfile?.id) return
@@ -99,21 +101,42 @@ export default function Audio() {
   const hasOther = (categorised['other']?.length ?? 0) > 0
   const tabs = ['all', ...categories, ...(hasOther ? ['other'] : [])]
 
+  function stopBrowserAudio() {
+    if (audioRef.current) {
+      audioRef.current.pause()
+      audioRef.current = null
+    }
+  }
+
   async function handlePlay(filename) {
+    stopBrowserAudio()
     setPlaying(filename)
     const result = await profilePlayAudio(filename).catch(() => null)
     if (!result?.played) {
-      new window.Audio(profileGetAudioFileUrl(filename)).play().catch(() => {})
+      const audio = new window.Audio(profileGetAudioFileUrl(filename))
+      audioRef.current = audio
+      audio.onended = () => setPlaying(null)
+      audio.play().catch(() => {})
     }
   }
 
   async function handleRandom(category) {
+    stopBrowserAudio()
     const result = await profilePlayRandomAudio(category).catch(() => null)
     const filename = result?.filename ?? null
     setPlaying(filename ?? `random:${category}`)
     if (!result?.played && filename) {
-      new window.Audio(profileGetAudioFileUrl(filename)).play().catch(() => {})
+      const audio = new window.Audio(profileGetAudioFileUrl(filename))
+      audioRef.current = audio
+      audio.onended = () => setPlaying(null)
+      audio.play().catch(() => {})
     }
+  }
+
+  function handleStop() {
+    stopBrowserAudio()
+    setPlaying(null)
+    profileStopAudio().catch(() => {})
   }
 
   function renderCardGrid(fileList) {
@@ -146,19 +169,37 @@ export default function Audio() {
         </div>
       )}
 
-      <div className="tab-container" style={{ marginBottom: 8 }}>
-        {tabs.map(tab => (
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 8 }}>
+        <div className="tab-container" style={{ flex: 1, marginBottom: 0 }}>
+          {tabs.map(tab => (
+            <button
+              key={tab}
+              className={`tablinks${activeTab === tab ? ' active' : ''}`}
+              onClick={() => setActiveTab(tab)}
+            >
+              {tab === 'all'
+                ? 'All'
+                : `${tab.charAt(0).toUpperCase() + tab.slice(1)} (${categorised[tab]?.length ?? 0})`
+              }
+            </button>
+          ))}
+        </div>
+        {playing && (
           <button
-            key={tab}
-            className={`tablinks${activeTab === tab ? ' active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab === 'all'
-              ? 'All'
-              : `${tab.charAt(0).toUpperCase() + tab.slice(1)} (${categorised[tab]?.length ?? 0})`
-            }
-          </button>
-        ))}
+            onClick={handleStop}
+            style={{
+              flexShrink: 0,
+              padding: '4px 12px',
+              background: 'var(--danger)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              fontWeight: 500,
+              fontSize: '0.85em',
+            }}
+          >&#9646;&#9646; Stop</button>
+        )}
       </div>
 
       <div style={{ overflowY: 'auto' }}>

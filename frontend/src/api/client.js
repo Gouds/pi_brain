@@ -109,6 +109,9 @@ export const shutdown = () =>
 export const profileGetAudioList = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/audio/list`).then(r => r.json())
 
+export const profileStopAudio = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/audio/stop`).then(r => r.json())
+
 export const profilePlayAudio = (filename, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/audio/play/${encodeURIComponent(filename)}`).then(r => r.json())
 
@@ -224,6 +227,16 @@ export const profileAdminUpdateBus = (index, bus, pid = _profileId) =>
 
 export const profileAdminDeleteBus = (index, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/admin/buses/${index}`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Profile-scoped Servo Control ─────────────────────────────────────────────
+export const profileServoOpen = (servoName, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/servo/open/${encodeURIComponent(servoName)}`).then(r => r.json())
+
+export const profileServoClose = (servoName, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/servo/close/${encodeURIComponent(servoName)}`).then(r => r.json())
+
+export const profileServoMove = (servoName, angle, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/servo/${encodeURIComponent(servoName)}/move/${angle}`).then(r => r.json())
 
 // ── Profile Image ─────────────────────────────────────────────────────────────
 export const profileGetImageUrl = (pid = _profileId) =>

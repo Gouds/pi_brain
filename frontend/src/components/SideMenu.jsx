@@ -10,10 +10,11 @@ const TOP_LINKS = [
 ]
 
 const BOTTOM_LINKS = [
-  { to: '/scripts',  label: 'Scripting', feature: 'scripts' },
-  { to: '/settings', label: 'Settings' },
-  { to: '/debug',    label: 'Debug' },
-  { to: '/shutdown', label: 'Shutdown' },
+  { to: '/scripts',    label: 'Scripting',  feature: 'scripts' },
+  { to: '/simulation', label: 'Simulation' },
+  { to: '/settings',   label: 'Settings' },
+  { to: '/debug',      label: 'Debug' },
+  { to: '/shutdown',   label: 'Shutdown' },
 ]
 
 function NavLink({ to, label, location }) {
