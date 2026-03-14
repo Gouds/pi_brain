@@ -11,7 +11,7 @@ from utils import mainconfig
 from plugins.audio.audio_control import audio_list, audio_play, audio_random_list, audio_random_play, get_volume, set_volume
 from plugins.dome.dome_control import dome_list
 from plugins.body.body_control import body_list
-from plugins.servo.servo_control import i2c_servo_controls
+from plugins.servo.servo_control import i2c_servo_controls, reinit_bus, remove_bus
 from plugins.script.script_control import script_list, script_start_handler, running_scripts, stop_script, stop_all_scripts
 #import board
 #import busio
@@ -1113,6 +1113,7 @@ async def profile_admin_add_bus(profile_id: str, bus: BusConfig):
     config = _load_profile_servo_config(profile_id)
     config["i2c_buses"].append(bus.model_dump())
     _save_profile_servo_config(profile_id, config)
+    reinit_bus(bus.model_dump())
     return config["i2c_buses"]
 
 @app.put("/profiles/{profile_id}/admin/buses/{index}", tags=["Admin"])
@@ -1120,8 +1121,10 @@ async def profile_admin_update_bus(profile_id: str, index: int, bus: BusConfig):
     config = _load_profile_servo_config(profile_id)
     if index < 0 or index >= len(config["i2c_buses"]):
         raise HTTPException(status_code=404, detail="Bus index out of range")
+    old_name = config["i2c_buses"][index]["name"]
     config["i2c_buses"][index] = bus.model_dump()
     _save_profile_servo_config(profile_id, config)
+    reinit_bus(bus.model_dump(), old_name=old_name)
     return config["i2c_buses"]
 
 @app.delete("/profiles/{profile_id}/admin/buses/{index}", tags=["Admin"])
@@ -1129,8 +1132,10 @@ async def profile_admin_delete_bus(profile_id: str, index: int):
     config = _load_profile_servo_config(profile_id)
     if index < 0 or index >= len(config["i2c_buses"]):
         raise HTTPException(status_code=404, detail="Bus index out of range")
+    old_name = config["i2c_buses"][index]["name"]
     config["i2c_buses"].pop(index)
     _save_profile_servo_config(profile_id, config)
+    remove_bus(old_name)
     return config["i2c_buses"]
 
 

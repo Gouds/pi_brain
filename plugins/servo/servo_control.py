@@ -45,3 +45,31 @@ for bus_config in servo_config["i2c_buses"]:
         print(f"[SERVO] Initialised bus '{bus_name}' at {bus_address}")
     except Exception as e:
         print(f"[SERVO] Skipping bus '{bus_name}' at {bus_address} - {e}")
+
+
+def reinit_bus(bus_config, old_name=None):
+    """Dynamically initialise or re-initialise an I2C bus connection.
+    Call this after adding or updating a bus via the admin API.
+    Pass old_name if the bus was renamed so the old entry is removed."""
+    if old_name and old_name in i2c_servo_controls and old_name != bus_config["name"]:
+        del i2c_servo_controls[old_name]
+        print(f"[SERVO] Removed old bus '{old_name}'")
+    bus_name = bus_config["name"]
+    try:
+        scl_pin = getattr(board, bus_config["scl_pin"])
+        sda_pin = getattr(board, bus_config["sda_pin"])
+        i2c_servo_controls[bus_name] = I2CServoControl(
+            address=bus_config["address"], scl_pin=scl_pin, sda_pin=sda_pin
+        )
+        print(f"[SERVO] Initialised bus '{bus_name}' at {bus_config['address']}")
+        return True
+    except Exception as e:
+        print(f"[SERVO] Failed to initialise bus '{bus_name}': {e}")
+        return False
+
+
+def remove_bus(bus_name):
+    """Remove a bus from active servo controls. Call after deleting a bus via admin API."""
+    if bus_name in i2c_servo_controls:
+        del i2c_servo_controls[bus_name]
+        print(f"[SERVO] Removed bus '{bus_name}'")
