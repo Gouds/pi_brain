@@ -595,6 +595,22 @@ async def joystick_command(command: str):
 
 
 #######################
+# STARTUP
+#######################
+
+@app.on_event("startup")
+async def startup_init_profile_buses():
+    """Initialise I2C buses from all existing profile servo configs at startup."""
+    if not os.path.exists(PROFILES_DIR):
+        return
+    for profile_id in os.listdir(PROFILES_DIR):
+        config = _load_profile_servo_config(profile_id)
+        for bus in config.get("i2c_buses", []):
+            if bus["name"] not in i2c_servo_controls:
+                reinit_bus(bus)
+
+
+#######################
 # SYSTEM ITEMS
 #######################
 @app.get("/health", tags=["System"])
