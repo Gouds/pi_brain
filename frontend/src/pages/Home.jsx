@@ -65,27 +65,27 @@ export default function Home() {
   const showImage = !activeProfile?.builtin && !imgError
 
   return (
-    <div style={{ textAlign: 'center', padding: '12px 0' }}>
-      <div style={{ margin: '0 auto 12px' }}>
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '8px', gap: '8px', overflow: 'hidden' }}>
+      <div style={{ flex: '1 1 0', minHeight: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
         {showImage ? (
           <img
             src={profileGetImageUrl(activeProfile?.id)}
             alt={activeProfile?.robot?.name ?? 'Robot'}
             onError={() => setImgError(true)}
-            style={{ maxWidth: '90vw', maxHeight: '40vh', width: 'auto', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }}
+            style={{ maxWidth: '100%', maxHeight: '100%', width: 'auto', height: 'auto', borderRadius: 12, display: 'block' }}
           />
         ) : (
           <RobotPlaceholder />
         )}
       </div>
-      <h2>{activeProfile?.robot?.name ?? 'Pi Brain'}</h2>
-      <p className="home-status">
+      <h2 style={{ margin: 0 }}>{activeProfile?.robot?.name ?? 'Pi Brain'}</h2>
+      <p className="home-status" style={{ margin: 0 }}>
         API Status:{' '}
         <span className={status === 'Online' ? 'status-online' : 'status-offline'}>
           {status}
         </span>
       </p>
-      <p>Use the menu to navigate to controls.</p>
+      <p style={{ margin: 0 }}>Use the menu to navigate to controls.</p>
     </div>
   )
 }
