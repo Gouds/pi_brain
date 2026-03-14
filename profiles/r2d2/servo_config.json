@@ -1,0 +1,45 @@
+{
+    "i2c_buses": [
+        {
+            "name": "dome",
+            "address": "1",
+            "scl_pin": "1",
+            "sda_pin": "2"
+        },
+        {
+            "name": "body",
+            "address": "2",
+            "scl_pin": "2",
+            "sda_pin": "3"
+        }
+    ],
+    "servos": [
+        {
+            "id": 0,
+            "name": "hhhhhhhhhh",
+            "bus": "dome",
+            "default_position": 100,
+            "open_position": 1,
+            "close_position": 100,
+            "position": 1
+        },
+        {
+            "id": 0,
+            "name": "hhhhhh",
+            "bus": "dome",
+            "default_position": 0,
+            "open_position": 0,
+            "close_position": 0,
+            "position": 0
+        },
+        {
+            "id": 0,
+            "name": "vghjgg",
+            "bus": "body",
+            "default_position": 0,
+            "open_position": 0,
+            "close_position": 0,
+            "position": 0
+        }
+    ]
+}

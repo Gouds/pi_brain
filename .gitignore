@@ -11,8 +11,5 @@ frontend/dist/
 # Config dir
 ~/.pi_brain/
 
-# Runtime profile data (audio files, images, per-robot config)
-profiles/
-
 # Logs
 logs/
