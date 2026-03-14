@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query, BackgroundTasks
 from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import mimetypes
 from pydantic import BaseModel
 #from gpio_control import turn_on_pin, turn_off_pin
@@ -1271,6 +1272,11 @@ async def profile_image_delete(profile_id: str):
     os.remove(path)
     return {"deleted": True}
 
+
+# Serve the built React frontend — must be last so it doesn't shadow API routes
+_dist = os.path.join(os.path.dirname(__file__), "frontend", "dist")
+if os.path.isdir(_dist):
+    app.mount("/", StaticFiles(directory=_dist, html=True), name="frontend")
 
 if __name__ == "__main__":
     import uvicorn
