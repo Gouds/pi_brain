@@ -157,6 +157,7 @@ const PAGE_TITLES = {
   '/admin': 'Admin',
   '/admin/servos': 'Edit Servos',
   '/admin/buses': 'Edit Buses',
+  '/admin/connection': 'Connection',
   '/audio-library': 'Audio Library',
   '/simulation': 'Simulation',
 }

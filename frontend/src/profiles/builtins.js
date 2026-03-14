@@ -1,6 +1,8 @@
+import { DEFAULT_API_URL } from '../config.js'
+
 const DEFAULT_ROBOT = {
   name: 'My Robot',
-  api_url: 'http://localhost:8000',
+  api_url: DEFAULT_API_URL,
   features: ['home', 'dome', 'body', 'audio', 'scripts'],
 }
 

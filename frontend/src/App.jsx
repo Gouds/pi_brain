@@ -19,6 +19,7 @@ import Profiles from './pages/Profiles.jsx'
 import Admin from './pages/admin/Admin.jsx'
 import EditServos from './pages/admin/EditServos.jsx'
 import EditBuses from './pages/admin/EditBuses.jsx'
+import Connection from './pages/admin/Connection.jsx'
 import AudioLibrary from './pages/AudioLibrary.jsx'
 import Simulation from './pages/Simulation.jsx'
 
@@ -63,6 +64,7 @@ export default function App() {
                 <Route path="/admin" element={<Admin />} />
                 <Route path="/admin/servos" element={<EditServos />} />
                 <Route path="/admin/buses" element={<EditBuses />} />
+                <Route path="/admin/connection" element={<Connection />} />
                 <Route path="/audio-library" element={<AudioLibrary />} />
                 <Route path="/simulation" element={<Simulation />} />
               </Routes>
