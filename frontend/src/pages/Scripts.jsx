@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useContext } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   profileGetScriptList,
   profileStartScript,
@@ -11,6 +12,7 @@ import { ProfileContext } from '../context/ProfileContext.js'
 export default function Scripts() {
   const { activeProfile } = useContext(ProfileContext)
   const isBuiltin = activeProfile?.builtin ?? true
+  const navigate = useNavigate()
 
   const [scripts, setScripts] = useState([])
   const [running, setRunning] = useState({})
@@ -74,12 +76,20 @@ export default function Scripts() {
       </div>
 
       <div className="script-container">
-        <h3>All Scripts</h3>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <h3 style={{ margin: 0 }}>All Scripts</h3>
+          {!isBuiltin && (
+            <button
+              onClick={() => navigate('/script-editor')}
+              style={{ padding: '5px 12px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
+            >+ New Script</button>
+          )}
+        </div>
         <div className="script-item">
           <button onClick={handleStopAll}>Stop All</button>
           {!isBuiltin && (
             <>
-              <button onClick={() => uploadRef.current?.click()}>Upload Script</button>
+              <button onClick={() => uploadRef.current?.click()}>Upload .scr</button>
               <input
                 ref={uploadRef}
                 type="file"
@@ -96,7 +106,10 @@ export default function Scripts() {
             <button onClick={() => handleStart(cleanName(f), 0)}>Play Once</button>
             <button onClick={() => handleStart(cleanName(f), 1)}>Loop</button>
             {!isBuiltin && (
-              <button className="btn-danger" onClick={() => handleDelete(f)}>Del</button>
+              <>
+                <button onClick={() => navigate(`/script-editor?name=${encodeURIComponent(cleanName(f))}`)}>Edit</button>
+                <button className="btn-danger" onClick={() => handleDelete(f)}>Del</button>
+              </>
             )}
           </div>
         ))}

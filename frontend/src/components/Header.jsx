@@ -160,6 +160,7 @@ const PAGE_TITLES = {
   '/admin/connection': 'Connection',
   '/audio-library': 'Audio Library',
   '/simulation': 'Simulation',
+  '/script-editor': 'Script Editor',
 }
 
 export default function Header({ onMenuToggle, onVolumeOpen }) {

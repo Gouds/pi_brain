@@ -1040,6 +1040,25 @@ async def profile_script_delete(profile_id: str, filename: str):
     os.remove(filepath)
     return {"deleted": filename}
 
+@app.get("/profiles/{profile_id}/scripts/{name}/content", tags=["Admin"])
+async def profile_script_get_content(profile_id: str, name: str):
+    path = os.path.join(_profile_scripts_dir(profile_id), f"{name}.scr")
+    if not os.path.exists(path):
+        raise HTTPException(status_code=404, detail="Script not found")
+    with open(path) as f:
+        return {"content": f.read()}
+
+class ScriptContent(BaseModel):
+    content: str
+
+@app.put("/profiles/{profile_id}/scripts/{name}", tags=["Admin"])
+async def profile_script_save(profile_id: str, name: str, body: ScriptContent):
+    os.makedirs(_profile_scripts_dir(profile_id), exist_ok=True)
+    path = os.path.join(_profile_scripts_dir(profile_id), f"{name}.scr")
+    with open(path, "w") as f:
+        f.write(body.content)
+    return {"saved": name}
+
 @app.get("/profiles/{profile_id}/scripts/start/{name}/{loop}", tags=["Admin"])
 async def profile_script_start(profile_id: str, name: str, loop: int, background_tasks: BackgroundTasks):
     from plugins.script.script_control import run_script, running_scripts
@@ -1072,9 +1091,17 @@ async def profile_script_start(profile_id: str, name: str, loop: int, background
                     async with aiohttp.ClientSession() as session:
                         async with session.get(f"http://localhost:8000/profiles/{profile_id}/audio/random/{parts[2]}") as r:
                             pass
-                elif parts[0] == "servo" and parts[1] == "position":
+                elif parts[0] == "servo" and parts[1] == "open":
                     async with aiohttp.ClientSession() as session:
-                        async with session.get(f"http://localhost:8000/servos/{parts[2]}/{parts[3]}/move?position={parts[4]}") as r:
+                        async with session.get(f"http://localhost:8000/profiles/{profile_id}/servo/open/{parts[2]}") as r:
+                            pass
+                elif parts[0] == "servo" and parts[1] == "close":
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"http://localhost:8000/profiles/{profile_id}/servo/close/{parts[2]}") as r:
+                            pass
+                elif parts[0] == "servo" and parts[1] == "move":
+                    async with aiohttp.ClientSession() as session:
+                        async with session.get(f"http://localhost:8000/profiles/{profile_id}/servo/{parts[2]}/move/{parts[3]}") as r:
                             pass
             if int(loop) == 1 and script_id in running_scripts:
                 await _run_profile_script(script_id, script_path, name, loop)

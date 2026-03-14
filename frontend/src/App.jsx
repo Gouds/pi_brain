@@ -22,6 +22,7 @@ import EditBuses from './pages/admin/EditBuses.jsx'
 import Connection from './pages/admin/Connection.jsx'
 import AudioLibrary from './pages/AudioLibrary.jsx'
 import Simulation from './pages/Simulation.jsx'
+import ScriptEditor from './pages/ScriptEditor.jsx'
 
 import { ProfileContext } from './context/ProfileContext.js'
 import { useProfile } from './hooks/useProfile.js'
@@ -67,6 +68,7 @@ export default function App() {
                 <Route path="/admin/connection" element={<Connection />} />
                 <Route path="/audio-library" element={<AudioLibrary />} />
                 <Route path="/simulation" element={<Simulation />} />
+                <Route path="/script-editor" element={<ScriptEditor />} />
               </Routes>
             </div>
             {!isTouch && <SideMenu side="right" visible={menuState === 'right'} />}

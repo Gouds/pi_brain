@@ -186,6 +186,16 @@ export const profileUploadScript = (file, pid = _profileId) => {
 export const profileDeleteScript = (filename, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/scripts/${encodeURIComponent(filename)}`, { method: 'DELETE' }).then(r => r.json())
 
+export const profileGetScriptContent = (name, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/scripts/${encodeURIComponent(name)}/content`).then(r => r.json())
+
+export const profileSaveScript = (name, content, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/scripts/${encodeURIComponent(name)}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ content }),
+  }).then(r => r.json())
+
 // ── Profile-scoped Admin: Servos ──────────────────────────────────────────────
 export const profileAdminGetServos = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/admin/servos`).then(r => r.json())
