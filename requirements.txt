@@ -8,5 +8,6 @@
 
 fastapi
 uvicorn[standard]
+python-multipart
 future
 aiohttp
