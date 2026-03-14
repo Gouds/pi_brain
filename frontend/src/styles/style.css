@@ -192,7 +192,11 @@ header h1 {
 
 .rightheader a {
     width: auto;
+    height: auto;
     padding: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     opacity: 0.6;
     transition: opacity 0.15s;
 }

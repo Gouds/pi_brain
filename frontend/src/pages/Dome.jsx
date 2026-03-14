@@ -21,40 +21,40 @@ function ServoCard({ servo, pos, setPos }) {
       background: 'var(--bg-surface)',
       border: '1px solid var(--border)',
       borderRadius: '6px',
-      padding: '14px',
+      padding: '8px 10px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '10px',
+      gap: '6px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{ fontWeight: 600, color: 'var(--text-primary)' }}>{servo.name}</span>
-        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', background: 'var(--bg-hover)', padding: '2px 7px', borderRadius: '3px' }}>
+        <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{servo.name}</span>
+        <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', background: 'var(--bg-hover)', padding: '1px 5px', borderRadius: '3px' }}>
           {servo.group || servo.bus}
         </span>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <input
           type="range" min={0} max={180} value={pos}
-          style={{ flex: 1, accentColor: 'var(--accent)' }}
+          style={{ flex: 1, accentColor: 'var(--accent)', height: '18px' }}
           onChange={e => setPos(Number(e.target.value))}
           onMouseUp={() => act(() => profileServoMove(servo.name, pos))}
           onTouchEnd={() => act(() => profileServoMove(servo.name, pos))}
           disabled={busy}
         />
-        <span style={{ minWidth: '38px', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{pos}°</span>
+        <span style={{ minWidth: '34px', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{pos}°</span>
       </div>
 
-      <div style={{ display: 'flex', gap: '8px' }}>
+      <div style={{ display: 'flex', gap: '6px' }}>
         <button
           onClick={() => act(() => profileServoOpen(servo.name))}
           disabled={busy}
-          style={{ flex: 1, padding: '10px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 500, fontSize: '1rem' }}
+          style={{ flex: 1, padding: '7px 4px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 600, fontSize: '0.82rem' }}
         >Open</button>
         <button
           onClick={() => act(() => profileServoClose(servo.name))}
           disabled={busy}
-          style={{ flex: 1, padding: '10px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 500, fontSize: '1rem' }}
+          style={{ flex: 1, padding: '7px 4px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 600, fontSize: '0.82rem' }}
         >Close</button>
       </div>
     </div>
@@ -67,10 +67,12 @@ const NAV_BTN = {
   borderRadius: '6px',
   color: 'var(--text-primary)',
   fontSize: '1.4rem',
-  padding: '8px 14px',
+  padding: '6px 12px',
   cursor: 'pointer',
   userSelect: 'none',
   flexShrink: 0,
+  alignSelf: 'flex-start',
+  marginTop: '2px',
 }
 
 export default function Dome() {
@@ -78,7 +80,6 @@ export default function Dome() {
   const [servos, setServos] = useState([])
   const [positions, setPositions] = useState({})
   const [activeTab, setActiveTab] = useState('All')
-  const swipeRef = useRef(null)
   const pointerX = useRef(null)
 
   useEffect(() => {
@@ -94,15 +95,12 @@ export default function Dome() {
       .catch(() => { setServos([]); setPositions({}) })
   }, [activeProfile?.id])
 
-  // Ordered unique groups — "All" always first
   const groups = ['All', ...([...new Set(servos.map(s => s.group).filter(Boolean))])]
-  // Servos without a group are only visible under "All"
   const visible = activeTab === 'All' ? servos : servos.filter(s => s.group === activeTab)
 
   function goTab(dir) {
     const idx = groups.indexOf(activeTab)
-    const next = (idx + dir + groups.length) % groups.length
-    setActiveTab(groups[next])
+    setActiveTab(groups[(idx + dir + groups.length) % groups.length])
   }
 
   function onPointerDown(e) { pointerX.current = e.clientX }
@@ -126,25 +124,25 @@ export default function Dome() {
   }
 
   return (
-    <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+    <div style={{ padding: '10px 12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
 
       {/* Tab bar */}
       {groups.length > 1 && (
-        <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
+        <div style={{ display: 'flex', gap: '4px', overflowX: 'auto', paddingBottom: '2px' }}>
           {groups.map(g => (
             <button
               key={g}
               onClick={() => setActiveTab(g)}
               style={{
-                padding: '8px 16px',
+                padding: '5px 14px',
                 borderRadius: '20px',
-                border: '1px solid var(--border)',
-                background: activeTab === g ? 'var(--accent)' : 'var(--bg-surface)',
-                color: activeTab === g ? '#fff' : 'var(--text-secondary)',
+                border: activeTab === g ? '2px solid var(--accent)' : '1px solid var(--border)',
+                background: 'var(--bg-surface)',
+                color: activeTab === g ? 'var(--accent)' : 'var(--text-secondary)',
                 cursor: 'pointer',
-                fontWeight: activeTab === g ? 600 : 400,
+                fontWeight: activeTab === g ? 700 : 400,
                 whiteSpace: 'nowrap',
-                fontSize: '0.9rem',
+                fontSize: '0.85rem',
               }}
             >{g}</button>
           ))}
@@ -153,13 +151,12 @@ export default function Dome() {
 
       {/* Open All / Close All */}
       {visible.length > 0 && (
-        <div style={{ display: 'flex', gap: '8px' }}>
-          <button onClick={openAll} style={{ padding: '10px 18px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}>Open All</button>
-          <button onClick={closeAll} style={{ padding: '10px 18px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}>Close All</button>
+        <div style={{ display: 'flex', gap: '6px' }}>
+          <button onClick={openAll} style={{ padding: '7px 16px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Open All</button>
+          <button onClick={closeAll} style={{ padding: '7px 16px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600, fontSize: '0.85rem' }}>Close All</button>
         </div>
       )}
 
-      {/* Card grid with swipe + arrow nav */}
       {servos.length === 0 ? (
         <p style={{ color: 'var(--text-secondary)' }}>
           No dome servos configured. Go to{' '}
@@ -167,28 +164,21 @@ export default function Dome() {
           {' '}and add servos with bus set to <strong>dome</strong>.
         </p>
       ) : (
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
-          {/* Left arrow */}
-          {groups.length > 1 && (
-            <button style={NAV_BTN} onClick={() => goTab(-1)}>‹</button>
-          )}
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+          {groups.length > 1 && <button style={NAV_BTN} onClick={() => goTab(-1)}>‹</button>}
 
-          {/* Cards */}
           <div
-            ref={swipeRef}
             onPointerDown={onPointerDown}
             onPointerUp={onPointerUp}
             style={{
               flex: 1,
               display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              gap: '12px',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))',
+              gap: '8px',
               touchAction: 'pan-y',
             }}
           >
-            {visible.length === 0 && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>No servos in this group.</p>
-            )}
+            {visible.length === 0 && <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>No servos in this group.</p>}
             {visible.map((servo, i) => (
               <ServoCard
                 key={`${servo.bus}-${servo.id}-${i}`}
@@ -199,10 +189,7 @@ export default function Dome() {
             ))}
           </div>
 
-          {/* Right arrow */}
-          {groups.length > 1 && (
-            <button style={NAV_BTN} onClick={() => goTab(1)}>›</button>
-          )}
+          {groups.length > 1 && <button style={NAV_BTN} onClick={() => goTab(1)}>›</button>}
         </div>
       )}
     </div>
