@@ -10,8 +10,13 @@ except ImportError:
     print("[DEV MODE] Pi hardware not available - using mock servo hardware")
 
 # Initialize I2C bus and ServoKit
-i2c_bus = busio.I2C(board.SCL, board.SDA)
-kit = ServoKit(channels=16, i2c=i2c_bus)
+try:
+    i2c_bus = busio.I2C(board.SCL, board.SDA)
+    kit = ServoKit(channels=16, i2c=i2c_bus)
+except Exception as e:
+    print(f"[SERVO] Default I2C init skipped - {e}")
+    i2c_bus = None
+    kit = None
 
 
 class I2CServoControl:
@@ -33,6 +38,10 @@ i2c_servo_controls = {}
 for bus_config in servo_config["i2c_buses"]:
     bus_name = bus_config["name"]
     bus_address = bus_config["address"]
-    scl_pin = getattr(board, bus_config["scl_pin"])
-    sda_pin = getattr(board, bus_config["sda_pin"])
-    i2c_servo_controls[bus_name] = I2CServoControl(address=bus_address, scl_pin=scl_pin, sda_pin=sda_pin)
+    try:
+        scl_pin = getattr(board, bus_config["scl_pin"])
+        sda_pin = getattr(board, bus_config["sda_pin"])
+        i2c_servo_controls[bus_name] = I2CServoControl(address=bus_address, scl_pin=scl_pin, sda_pin=sda_pin)
+        print(f"[SERVO] Initialised bus '{bus_name}' at {bus_address}")
+    except Exception as e:
+        print(f"[SERVO] Skipping bus '{bus_name}' at {bus_address} - {e}")
