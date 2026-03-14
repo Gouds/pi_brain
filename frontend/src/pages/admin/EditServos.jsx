@@ -4,6 +4,7 @@ import {
   profileAdminAddServo    as adminAddServo,
   profileAdminUpdateServo as adminUpdateServo,
   profileAdminDeleteServo as adminDeleteServo,
+  profileAdminGetBuses    as adminGetBuses,
 } from '../../api/client.js'
 import { ProfileContext } from '../../context/ProfileContext.js'
 
@@ -12,11 +13,20 @@ const BLANK = { id: 0, name: '', bus: '', default_position: 0, open_position: 0,
 export default function EditServos() {
   const { activeProfile } = useContext(ProfileContext)
   const [servos, setServos] = useState([])
+  const [buses, setBuses] = useState([])
   const [form, setForm] = useState(BLANK)
   const [editIndex, setEditIndex] = useState(null)
 
   function load() {
-    adminGetServos().then(setServos).catch(() => {})
+    adminGetServos().then(data => {
+      setServos(data)
+      // Auto-increment id: max existing id + 1, per-bus
+      const nextId = data.length > 0 ? Math.max(...data.map(s => s.id ?? 0)) + 1 : 0
+      setForm(f => ({ ...f, id: nextId }))
+    }).catch(() => {})
+    adminGetBuses().then(data => {
+      setBuses(Array.isArray(data) ? data : [])
+    }).catch(() => {})
   }
 
   useEffect(load, [activeProfile?.id])
@@ -28,7 +38,11 @@ export default function EditServos() {
 
   function handleAdd(e) {
     e.preventDefault()
-    adminAddServo(form).then(data => { setServos(data); setForm(BLANK) }).catch(() => {})
+    adminAddServo(form).then(data => {
+      setServos(data)
+      const nextId = data.length > 0 ? Math.max(...data.map(s => s.id ?? 0)) + 1 : 0
+      setForm({ ...BLANK, id: nextId, bus: form.bus })
+    }).catch(() => {})
   }
 
   function handleEditChange(index, field, value) {
@@ -55,14 +69,28 @@ export default function EditServos() {
 
       <form className="admin-form" onSubmit={handleAdd}>
         {Object.keys(BLANK).map(k => (
-          <input
-            key={k}
-            name={k}
-            placeholder={k}
-            value={form[k]}
-            onChange={handleFormChange}
-            type={numFields.includes(k) ? 'number' : 'text'}
-          />
+          k === 'bus' ? (
+            <select
+              key={k}
+              name={k}
+              value={form[k]}
+              onChange={handleFormChange}
+            >
+              <option value="">— bus —</option>
+              {buses.map(b => (
+                <option key={b.name} value={b.name}>{b.name}</option>
+              ))}
+            </select>
+          ) : (
+            <input
+              key={k}
+              name={k}
+              placeholder={k}
+              value={form[k]}
+              onChange={handleFormChange}
+              type={numFields.includes(k) ? 'number' : 'text'}
+            />
+          )
         ))}
         <button type="submit">Add</button>
       </form>
@@ -78,11 +106,23 @@ export default function EditServos() {
             <tr key={i}>
               {['id', 'name', 'bus', 'default_position', 'open_position', 'close_position', 'position', 'speed'].map(f => (
                 <td key={f}>
-                  <input
-                    value={s[f] ?? ''}
-                    type={numFields.includes(f) ? 'number' : 'text'}
-                    onChange={e => handleEditChange(i, f, e.target.value)}
-                  />
+                  {f === 'bus' ? (
+                    <select
+                      value={s[f] ?? ''}
+                      onChange={e => handleEditChange(i, f, e.target.value)}
+                    >
+                      <option value="">—</option>
+                      {buses.map(b => (
+                        <option key={b.name} value={b.name}>{b.name}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      value={s[f] ?? ''}
+                      type={numFields.includes(f) ? 'number' : 'text'}
+                      onChange={e => handleEditChange(i, f, e.target.value)}
+                    />
+                  )}
                 </td>
               ))}
               <td>
