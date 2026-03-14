@@ -21,12 +21,11 @@ except Exception as e:
 
 class I2CServoControl:
     def __init__(self, address, scl_pin, sda_pin):
-        self.address = address
+        self.address = int(address, 16) if isinstance(address, str) else address
         self.i2c = busio.I2C(scl_pin, sda_pin)
-        self.kit = ServoKit(channels=16, i2c=self.i2c)
+        self.kit = ServoKit(channels=16, i2c=self.i2c, address=self.address)
 
     def move_servo(self, servo_id, position):
-        # Move the specified servo to the specified position
         self.kit.servo[servo_id].angle = position
 
 # Read servo configurations from config file
