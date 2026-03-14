@@ -6,7 +6,7 @@ __pycache__/
 
 # Node
 frontend/node_modules/
-frontend/dist/
+# frontend/dist/  — tracked so Pi can serve without Node
 
 # Config dir
 ~/.pi_brain/
