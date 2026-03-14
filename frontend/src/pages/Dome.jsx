@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef, useContext } from 'react'
 import { ProfileContext } from '../context/ProfileContext.js'
 import { profileAdminGetServos, profileServoOpen, profileServoClose, profileServoMove } from '../api/client.js'
+import { useRecording } from '../context/RecordingContext.jsx'
 
 function ServoCard({ servo, pos, setPos }) {
   const [busy, setBusy] = useState(false)
+  const { isRecording, record } = useRecording()
 
-  async function act(fn) {
+  async function act(fn, step) {
     if (busy) return
     setBusy(true)
     try {
       const r = await fn().catch(() => null)
       if (r?.position !== undefined) setPos(r.position)
+      if (isRecording && step) record(step)
     } finally {
       setBusy(false)
     }
@@ -38,8 +41,8 @@ function ServoCard({ servo, pos, setPos }) {
           type="range" min={0} max={180} value={pos}
           style={{ flex: 1, accentColor: 'var(--accent)', height: '18px' }}
           onChange={e => setPos(Number(e.target.value))}
-          onMouseUp={() => act(() => profileServoMove(servo.name, pos))}
-          onTouchEnd={() => act(() => profileServoMove(servo.name, pos))}
+          onMouseUp={() => act(() => profileServoMove(servo.name, pos), { type: 'servo_move', servo: servo.name, angle: String(pos) })}
+          onTouchEnd={() => act(() => profileServoMove(servo.name, pos), { type: 'servo_move', servo: servo.name, angle: String(pos) })}
           disabled={busy}
         />
         <span style={{ minWidth: '34px', textAlign: 'right', color: 'var(--text-secondary)', fontSize: '0.78rem' }}>{pos}°</span>
@@ -47,12 +50,12 @@ function ServoCard({ servo, pos, setPos }) {
 
       <div style={{ display: 'flex', gap: '6px' }}>
         <button
-          onClick={() => act(() => profileServoOpen(servo.name))}
+          onClick={() => act(() => profileServoOpen(servo.name), { type: 'servo_open', servo: servo.name })}
           disabled={busy}
           style={{ flex: 1, padding: '7px 4px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 600, fontSize: '0.82rem' }}
         >Open</button>
         <button
-          onClick={() => act(() => profileServoClose(servo.name))}
+          onClick={() => act(() => profileServoClose(servo.name), { type: 'servo_close', servo: servo.name })}
           disabled={busy}
           style={{ flex: 1, padding: '7px 4px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: busy ? 'not-allowed' : 'pointer', opacity: busy ? 0.6 : 1, fontWeight: 600, fontSize: '0.82rem' }}
         >Close</button>

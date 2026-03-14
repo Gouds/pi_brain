@@ -9,6 +9,7 @@ import {
   profileGetAudioFileUrl,
 } from '../api/client.js'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useRecording } from '../context/RecordingContext.jsx'
 
 function getCategory(filename, tags, categories) {
   const tag = tags[filename]
@@ -70,6 +71,7 @@ function AudioCard({ filename, playing, onPlay }) {
 
 export default function Audio() {
   const { activeProfile } = useContext(ProfileContext)
+  const { isRecording, record } = useRecording()
   const [files, setFiles] = useState([])
   const [tags, setTags] = useState({})
   const [categories, setCategories] = useState([])
@@ -112,6 +114,7 @@ export default function Audio() {
     stopBrowserAudio()
     setPlaying(filename)
     const result = await profilePlayAudio(filename).catch(() => null)
+    if (isRecording) record({ type: 'audio_play', file: filename })
     if (!result?.played) {
       const audio = new window.Audio(profileGetAudioFileUrl(filename))
       audioRef.current = audio
@@ -125,6 +128,7 @@ export default function Audio() {
     const result = await profilePlayRandomAudio(category).catch(() => null)
     const filename = result?.filename ?? null
     setPlaying(filename ?? `random:${category}`)
+    if (isRecording) record({ type: 'audio_random', category })
     if (!result?.played && filename) {
       const audio = new window.Audio(profileGetAudioFileUrl(filename))
       audioRef.current = audio

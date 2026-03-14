@@ -860,3 +860,8 @@ body[data-wide] .contentwrapper {
 body[data-wide][data-layout="touch"] .contentwrapper {
     height: calc(100vh - 104px);  /* 60px header + 44px bottom-nav */
 }
+
+@keyframes recpulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.3; }
+}

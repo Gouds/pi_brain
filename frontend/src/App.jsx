@@ -26,6 +26,7 @@ import ScriptEditor from './pages/ScriptEditor.jsx'
 
 import { ProfileContext } from './context/ProfileContext.js'
 import { useProfile } from './hooks/useProfile.js'
+import { RecordingProvider } from './context/RecordingContext.jsx'
 
 export default function App() {
   const [menuState, setMenuState] = useState('left')
@@ -45,6 +46,7 @@ export default function App() {
 
   return (
     <ProfileContext.Provider value={profileValue}>
+      <RecordingProvider>
       <HashRouter>
         <div className="wrapper">
           <Header onMenuToggle={toggleMenu} onVolumeOpen={() => setVolumeOpen(true)} />
@@ -76,6 +78,7 @@ export default function App() {
           {isTouch ? <BottomNav /> : <Footer />}
         </div>
       </HashRouter>
+      </RecordingProvider>
     </ProfileContext.Provider>
   )
 }

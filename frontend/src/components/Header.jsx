@@ -1,6 +1,7 @@
 import { useContext, useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useRecording } from '../context/RecordingContext.jsx'
 
 function ExpandIcon() {
   return (
@@ -165,11 +166,18 @@ const PAGE_TITLES = {
 
 export default function Header({ onMenuToggle, onVolumeOpen }) {
   const location = useLocation()
+  const navigate = useNavigate()
   const { activeProfile, wideMode, toggleWideMode } = useContext(ProfileContext)
+  const { isRecording, stop } = useRecording()
   const page = PAGE_TITLES[location.pathname] ?? 'Pi Brain'
   const robotName = activeProfile?.robot?.name
   const prefix = robotName && robotName !== 'My Robot' ? robotName : 'Pi Brain'
   const title = `${prefix} — ${page}`
+
+  function handleStopRecording() {
+    stop()
+    navigate('/script-editor')
+  }
 
   return (
     <header>
@@ -178,6 +186,11 @@ export default function Header({ onMenuToggle, onVolumeOpen }) {
         <h1>{title}</h1>
       </div>
       <div className="rightheader">
+        {isRecording && (
+          <a onClick={handleStopRecording} title="Stop recording" style={{ display: 'inline-flex', alignItems: 'center', gap: 4, color: 'var(--danger)', animation: 'recpulse 1.2s ease-in-out infinite' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.05em' }}>■ REC</span>
+          </a>
+        )}
         <a className="header-menu-toggle" onClick={onMenuToggle} title="Toggle Menu">
           <MenuIcon />
         </a>

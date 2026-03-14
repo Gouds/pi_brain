@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useRecording } from '../context/RecordingContext.jsx'
 import {
   profileAdminGetServos,
   profileGetAudioList,
@@ -135,12 +136,16 @@ function StepRow({ step, index, total, servos, audioFiles, categories, onChange,
 
 export default function ScriptEditor() {
   const { activeProfile } = useContext(ProfileContext)
+  const { consumePending } = useRecording()
   const [params] = useSearchParams()
   const navigate = useNavigate()
 
   const editName = params.get('name') ?? ''
   const [scriptName, setScriptName] = useState(editName)
-  const [steps, setSteps] = useState([blankStep()])
+  const [steps, setSteps] = useState(() => {
+    // If we arrived from a recording, seed the steps from it
+    return [blankStep()]
+  })
   const [servos, setServos] = useState([])
   const [audioFiles, setAudioFiles] = useState([])
   const [categories, setCategories] = useState([])
@@ -155,6 +160,14 @@ export default function ScriptEditor() {
       const cats = [...new Set(Object.values(tags))]
       setCategories(cats.length ? cats : ['alarm', 'happy', 'sad', 'misc'])
     }).catch(() => setCategories(['alarm', 'happy', 'sad', 'misc']))
+
+    // Consume steps recorded via the Record button
+    const recorded = consumePending()
+    if (recorded && recorded.length > 0) {
+      const withIds = recorded.map(s => ({ ...s, _id: uid() }))
+      setSteps(withIds)
+      return
+    }
 
     if (editName) {
       profileGetScriptContent(editName, activeProfile.id)

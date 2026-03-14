@@ -8,11 +8,13 @@ import {
 } from '../api/client.js'
 import { getRunningScripts, stopScript, stopAllScripts } from '../api/client.js'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useRecording } from '../context/RecordingContext.jsx'
 
 export default function Scripts() {
   const { activeProfile } = useContext(ProfileContext)
   const isBuiltin = activeProfile?.builtin ?? true
   const navigate = useNavigate()
+  const { isRecording, start: startRecording } = useRecording()
 
   const [scripts, setScripts] = useState([])
   const [running, setRunning] = useState({})
@@ -79,10 +81,16 @@ export default function Scripts() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
           <h3 style={{ margin: 0 }}>All Scripts</h3>
           {!isBuiltin && (
-            <button
-              onClick={() => navigate('/script-editor')}
-              style={{ padding: '5px 12px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
-            >+ New Script</button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                onClick={() => { startRecording(); navigate('/dome') }}
+                style={{ padding: '5px 12px', background: 'var(--danger)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
+              >● Record</button>
+              <button
+                onClick={() => navigate('/script-editor')}
+                style={{ padding: '5px 12px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
+              >+ New</button>
+            </div>
           )}
         </div>
         <div className="script-item">
