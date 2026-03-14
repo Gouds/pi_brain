@@ -17,6 +17,7 @@ from plugins.script.script_control import script_list, script_start_handler, run
 #import busio
 #from adafruit_servokit import ServoKit
 import json
+import asyncio
 try:
     import RPi.GPIO as GPIO
 except ImportError:
@@ -118,6 +119,7 @@ class ServoConfig(BaseModel):
     open_position: int
     close_position: int
     position: int = 0
+    speed: int = 100  # 1 (slow) – 100 (instant)
 
 class BusConfig(BaseModel):
     name: str
@@ -1159,13 +1161,35 @@ async def profile_admin_delete_bus(profile_id: str, index: int):
 # PROFILE-SCOPED SERVO CONTROL
 #######################
 
+async def _move_with_speed(kit, servo_id, from_angle, to_angle, speed=100):
+    """Move a servo from from_angle to to_angle at the given speed (1=slow, 100=instant)."""
+    from_angle = int(from_angle)
+    to_angle = int(to_angle)
+    if speed >= 100 or from_angle == to_angle:
+        kit.servo[servo_id].angle = to_angle
+        return
+    steps = abs(to_angle - from_angle)
+    total_time = (100 - speed) * 0.03  # up to ~3 seconds at speed=1
+    delay = total_time / steps
+    direction = 1 if to_angle > from_angle else -1
+    for angle in range(from_angle, to_angle + direction, direction):
+        kit.servo[servo_id].angle = angle
+        await asyncio.sleep(delay)
+
+
 @app.get("/profiles/{profile_id}/servo/open/{servo_name}", tags=["Admin"])
 async def profile_servo_open(profile_id: str, servo_name: str):
     config = _load_profile_servo_config(profile_id)
     for servo in config["servos"]:
         if servo["name"] == servo_name:
             if servo["bus"] in i2c_servo_controls:
-                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], servo["open_position"])
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["open_position"]),
+                    servo["open_position"],
+                    servo.get("speed", 100),
+                )
             servo["position"] = servo["open_position"]
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Opened {servo_name}", "position": servo["open_position"]}
@@ -1177,7 +1201,13 @@ async def profile_servo_close(profile_id: str, servo_name: str):
     for servo in config["servos"]:
         if servo["name"] == servo_name:
             if servo["bus"] in i2c_servo_controls:
-                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], servo["close_position"])
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["close_position"]),
+                    servo["close_position"],
+                    servo.get("speed", 100),
+                )
             servo["position"] = servo["close_position"]
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Closed {servo_name}", "position": servo["close_position"]}
@@ -1191,7 +1221,13 @@ async def profile_servo_move(profile_id: str, servo_name: str, angle: int):
     for servo in config["servos"]:
         if servo["name"] == servo_name:
             if servo["bus"] in i2c_servo_controls:
-                i2c_servo_controls[servo["bus"]].move_servo(servo["id"], angle)
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", angle),
+                    angle,
+                    servo.get("speed", 100),
+                )
             servo["position"] = angle
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Moved {servo_name} to {angle}°", "position": angle}

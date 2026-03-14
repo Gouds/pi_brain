@@ -7,7 +7,7 @@ import {
 } from '../../api/client.js'
 import { ProfileContext } from '../../context/ProfileContext.js'
 
-const BLANK = { id: 0, name: '', bus: '', default_position: 0, open_position: 0, close_position: 0, position: 0 }
+const BLANK = { id: 0, name: '', bus: '', default_position: 0, open_position: 0, close_position: 0, position: 0, speed: 100 }
 
 export default function EditServos() {
   const { activeProfile } = useContext(ProfileContext)
@@ -47,7 +47,7 @@ export default function EditServos() {
     adminDeleteServo(index).then(setServos).catch(() => {})
   }
 
-  const numFields = ['id', 'default_position', 'open_position', 'close_position', 'position']
+  const numFields = ['id', 'default_position', 'open_position', 'close_position', 'position', 'speed']
 
   return (
     <div>
@@ -70,13 +70,13 @@ export default function EditServos() {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>ID</th><th>Name</th><th>Bus</th><th>Default</th><th>Open</th><th>Close</th><th>Pos</th><th></th>
+            <th>ID</th><th>Name</th><th>Bus</th><th>Default</th><th>Open</th><th>Close</th><th>Pos</th><th>Speed</th><th></th>
           </tr>
         </thead>
         <tbody>
           {servos.map((s, i) => (
             <tr key={i}>
-              {['id', 'name', 'bus', 'default_position', 'open_position', 'close_position', 'position'].map(f => (
+              {['id', 'name', 'bus', 'default_position', 'open_position', 'close_position', 'position', 'speed'].map(f => (
                 <td key={f}>
                   <input
                     value={s[f] ?? ''}

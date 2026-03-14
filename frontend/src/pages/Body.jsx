@@ -2,9 +2,7 @@ import { useState, useEffect, useContext } from 'react'
 import { ProfileContext } from '../context/ProfileContext.js'
 import { profileAdminGetServos, profileServoOpen, profileServoClose, profileServoMove } from '../api/client.js'
 
-function ServoCard({ servo }) {
-  const initial = servo.position ?? servo.default_position ?? 90
-  const [pos, setPos] = useState(initial)
+function ServoCard({ servo, pos, setPos }) {
   const [busy, setBusy] = useState(false)
 
   async function act(fn) {
@@ -97,19 +95,40 @@ function ServoCard({ servo }) {
 export default function Body() {
   const { activeProfile } = useContext(ProfileContext)
   const [servos, setServos] = useState([])
+  const [positions, setPositions] = useState({})
 
   useEffect(() => {
     if (!activeProfile?.id) return
     profileAdminGetServos(activeProfile.id)
-      .then(all => setServos((Array.isArray(all) ? all : []).filter(s => s.bus === 'body')))
-      .catch(() => setServos([]))
+      .then(all => {
+        const filtered = (Array.isArray(all) ? all : []).filter(s => s.bus === 'body')
+        setServos(filtered)
+        const init = {}
+        filtered.forEach(s => { init[s.name] = s.position ?? s.default_position ?? 90 })
+        setPositions(init)
+      })
+      .catch(() => { setServos([]); setPositions({}) })
   }, [activeProfile?.id])
 
+  function setPos(name, val) {
+    setPositions(p => ({ ...p, [name]: val }))
+  }
+
   function openAll() {
+    setPositions(p => {
+      const next = { ...p }
+      servos.forEach(s => { next[s.name] = s.open_position })
+      return next
+    })
     servos.forEach(s => profileServoOpen(s.name).catch(() => {}))
   }
 
   function closeAll() {
+    setPositions(p => {
+      const next = { ...p }
+      servos.forEach(s => { next[s.name] = s.close_position })
+      return next
+    })
     servos.forEach(s => profileServoClose(s.name).catch(() => {}))
   }
 
@@ -141,7 +160,12 @@ export default function Body() {
           gap: '12px',
         }}>
           {servos.map((servo, i) => (
-            <ServoCard key={`${servo.bus}-${servo.id}-${i}`} servo={servo} />
+            <ServoCard
+              key={`${servo.bus}-${servo.id}-${i}`}
+              servo={servo}
+              pos={positions[servo.name] ?? servo.open_position}
+              setPos={val => setPos(servo.name, val)}
+            />
           ))}
         </div>
       )}
