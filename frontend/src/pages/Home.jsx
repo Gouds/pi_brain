@@ -65,14 +65,14 @@ export default function Home() {
   const showImage = !activeProfile?.builtin && !imgError
 
   return (
-    <div style={{ textAlign: 'center' }}>
-      <div style={{ margin: '16px auto' }}>
+    <div style={{ textAlign: 'center', padding: '12px 0' }}>
+      <div style={{ margin: '0 auto 12px' }}>
         {showImage ? (
           <img
             src={profileGetImageUrl(activeProfile?.id)}
             alt={activeProfile?.robot?.name ?? 'Robot'}
             onError={() => setImgError(true)}
-            style={{ maxWidth: 240, maxHeight: 240, borderRadius: 12, display: 'block', margin: '0 auto' }}
+            style={{ maxWidth: '90vw', maxHeight: '40vh', width: 'auto', height: 'auto', borderRadius: 12, display: 'block', margin: '0 auto' }}
           />
         ) : (
           <RobotPlaceholder />
