@@ -121,6 +121,7 @@ class ServoConfig(BaseModel):
     close_position: int
     position: int = 0
     speed: int = 100  # 1 (slow) – 100 (instant)
+    group: str = ''   # logical grouping shown as a tab on the Dome/Body pages
 
 class BusConfig(BaseModel):
     name: str
