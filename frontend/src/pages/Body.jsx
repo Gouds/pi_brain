@@ -63,7 +63,7 @@ function ServoCard({ servo, pos, setPos }) {
           style={{
             flex: 1,
             padding: '8px',
-            background: 'var(--accent)',
+            background: 'var(--success)',
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
@@ -138,7 +138,7 @@ export default function Body() {
         <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
           <button
             onClick={openAll}
-            style={{ padding: '8px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
+            style={{ padding: '8px 18px', background: 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 500 }}
           >Open All</button>
           <button
             onClick={closeAll}
