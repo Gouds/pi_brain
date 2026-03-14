@@ -2,13 +2,7 @@
     "i2c_buses": [
         {
             "name": "dome",
-            "address": "0x40",
-            "scl_pin": "SCL",
-            "sda_pin": "SDA"
-        },
-        {
-            "name": "body",
-            "address": "0x41",
+            "address": "0x42",
             "scl_pin": "SCL",
             "sda_pin": "SDA"
         }
@@ -21,7 +15,7 @@
             "default_position": 2,
             "open_position": 2,
             "close_position": 150,
-            "position": 110
+            "position": 150
         },
         {
             "id": 1,
