@@ -1082,8 +1082,7 @@ async def profile_script_start(profile_id: str, name: str, loop: int, background
                 if not parts:
                     continue
                 if parts[0] == "sleep":
-                    import asyncio as _asyncio
-                    await _asyncio.sleep(int(parts[1]))
+                    await asyncio.sleep(float(parts[1]))
                 elif parts[0] == "audio" and parts[1] == "play":
                     async with aiohttp.ClientSession() as session:
                         async with session.get(f"http://localhost:8000/profiles/{profile_id}/audio/play/{parts[2]}") as r:
