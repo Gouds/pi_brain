@@ -38,10 +38,12 @@ const sel = {
 const inp = { ...sel, width: '60px' }
 
 const AXIS_LABELS = {
-  left_x:  'Left X (left/right)',
-  left_y:  'Left Y (up/down)',
-  right_x: 'Right X (twist)',
-  right_y: 'Right Y (up/down)',
+  left_x:     'Left X (left/right)',
+  left_y:     'Left Y (up/down)',
+  left_twist: 'Left Twist (rotate)',
+  right_x:    'Right X (left/right)',
+  right_y:    'Right Y (up/down)',
+  right_twist:'Right Twist (rotate)',
 }
 
 const BTN_LABELS = {

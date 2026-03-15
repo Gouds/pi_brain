@@ -14,14 +14,16 @@ const sel = {
 const inp = { ...sel, width: '60px' }
 
 const PIN_LABELS = {
-  left_x:  'Left Joystick X',
-  left_y:  'Left Joystick Y',
-  right_x: 'Right Joystick X',
-  right_y: 'Right Joystick Y',
-  btn1:    'Button 1',
-  btn2:    'Button 2',
-  btn3:    'Button 3',
-  estop:   'E-Stop',
+  left_x:     'Left Joystick X',
+  left_y:     'Left Joystick Y',
+  left_twist: 'Left Joystick Twist',
+  right_x:    'Right Joystick X',
+  right_y:    'Right Joystick Y',
+  right_twist:'Right Joystick Twist',
+  btn1:       'Button 1',
+  btn2:       'Button 2',
+  btn3:       'Button 3',
+  estop:      'E-Stop',
 }
 
 export default function ArduinoConfig() {

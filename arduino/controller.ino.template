@@ -1,23 +1,25 @@
 /*
- * Pi Brain -- Joystick Controller  (AUTO-GENERATED -- edit via Admin > Controller Config)
+ * Pi Brain -- Joystick Controller  (AUTO-GENERATED -- edit via Admin > Arduino Config)
  * Arduino Uno
  *
  * Serial output (9600 baud):
- *   "LX LY RX RY BTN ESTOP\n"
- *   LX/LY/RX/RY = 0-1023, BTN = bitmask (bit0=B1 bit1=B2 bit2=B3), ESTOP = 0|1
+ *   "LX LY LT RX RY RT BTN ESTOP\n"
+ *   LX/LY/LT/RX/RY/RT = 0-1023, BTN = bitmask (bit0=B1 bit1=B2 bit2=B3), ESTOP = 0|1
  */
 
-// -- Pin assignments (configured via Admin > Controller Config) ---------------
+// -- Pin assignments (configured via Admin > Arduino Config) -----------------
 const int PIN_LX    = {{PIN_LX}};
 const int PIN_LY    = {{PIN_LY}};
+const int PIN_LT    = {{PIN_LT}};
 const int PIN_RX    = {{PIN_RX}};
 const int PIN_RY    = {{PIN_RY}};
+const int PIN_RT    = {{PIN_RT}};
 const int PIN_BTN1  = {{PIN_BTN1}};
 const int PIN_BTN2  = {{PIN_BTN2}};
 const int PIN_BTN3  = {{PIN_BTN3}};
 const int PIN_ESTOP = {{PIN_ESTOP}};
 
-// -- Tuning (configured via Admin > Controller Config) -----------------------
+// -- Tuning (configured via Admin > Arduino Config) --------------------------
 const int  CENTER           = 512;
 const int  DEADZONE         = {{DEADZONE}};
 const int  CHANGE_THRESHOLD = {{CHANGE_THRESHOLD}};
@@ -27,8 +29,10 @@ const long SAMPLE_MS        = {{SAMPLE_MS}};
 // -- State -------------------------------------------------------------------
 int  prev_lx    = CENTER;
 int  prev_ly    = CENTER;
+int  prev_lt    = CENTER;
 int  prev_rx    = CENTER;
 int  prev_ry    = CENTER;
+int  prev_rt    = CENTER;
 byte prev_btn   = 0;
 byte prev_estop = 0;
 long last_send  = 0;
@@ -49,8 +53,10 @@ void setup() {
 void loop() {
   int lx = applyDeadzone(analogRead(PIN_LX));
   int ly = applyDeadzone(analogRead(PIN_LY));
+  int lt = applyDeadzone(analogRead(PIN_LT));
   int rx = applyDeadzone(analogRead(PIN_RX));
   int ry = applyDeadzone(analogRead(PIN_RY));
+  int rt = applyDeadzone(analogRead(PIN_RT));
 
   byte b1    = (digitalRead(PIN_BTN1)  == LOW) ? 1 : 0;
   byte b2    = (digitalRead(PIN_BTN2)  == LOW) ? 1 : 0;
@@ -62,8 +68,10 @@ void loop() {
 
   bool axisChanged  = (abs(lx - prev_lx) > CHANGE_THRESHOLD) ||
                       (abs(ly - prev_ly) > CHANGE_THRESHOLD) ||
+                      (abs(lt - prev_lt) > CHANGE_THRESHOLD) ||
                       (abs(rx - prev_rx) > CHANGE_THRESHOLD) ||
-                      (abs(ry - prev_ry) > CHANGE_THRESHOLD);
+                      (abs(ry - prev_ry) > CHANGE_THRESHOLD) ||
+                      (abs(rt - prev_rt) > CHANGE_THRESHOLD);
   bool btnChanged   = (btn   != prev_btn);
   bool estopChanged = (estop != prev_estop);
   bool keepalive    = ((now - last_send) >= KEEPALIVE_MS);
@@ -71,13 +79,15 @@ void loop() {
   if (axisChanged || btnChanged || estopChanged || keepalive) {
     Serial.print(lx);   Serial.print(' ');
     Serial.print(ly);   Serial.print(' ');
+    Serial.print(lt);   Serial.print(' ');
     Serial.print(rx);   Serial.print(' ');
     Serial.print(ry);   Serial.print(' ');
+    Serial.print(rt);   Serial.print(' ');
     Serial.print(btn);  Serial.print(' ');
     Serial.println(estop);
 
-    prev_lx    = lx;   prev_ly    = ly;
-    prev_rx    = rx;   prev_ry    = ry;
+    prev_lx    = lx;   prev_ly    = ly;   prev_lt    = lt;
+    prev_rx    = rx;   prev_ry    = ry;   prev_rt    = rt;
     prev_btn   = btn;  prev_estop = estop;
     last_send  = now;
   }

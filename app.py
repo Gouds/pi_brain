@@ -603,7 +603,8 @@ def _load_joystick_config(profile_id):
     if not os.path.exists(path):
         return {
             "deadzone": 30,
-            "axes": {"left_x": None, "left_y": None, "right_x": None, "right_y": None},
+            "axes": {"left_x": None, "left_y": None, "left_twist": None,
+                     "right_x": None, "right_y": None, "right_twist": None},
             "buttons": {"b1": None, "b2": None, "b3": None},
         }
     with open(path) as f:
@@ -757,11 +758,11 @@ async def joystick_command(command: str):
         return {"error": "No active profile set"}
 
     parts = command.split('-')
-    if len(parts) != 6:
-        return {"error": "Expected 6 values (LX-LY-RX-RY-BTN-ESTOP)"}
+    if len(parts) != 8:
+        return {"error": "Expected 8 values (LX-LY-LT-RX-RY-RT-BTN-ESTOP)"}
 
     try:
-        lx, ly, rx, ry, btn, estop = [int(p) for p in parts]
+        lx, ly, lt, rx, ry, rt, btn, estop = [int(p) for p in parts]
     except ValueError:
         return {"error": "All values must be integers"}
 
@@ -772,7 +773,7 @@ async def joystick_command(command: str):
     CENTER = 512
 
     # Dispatch axes — only if outside deadzone
-    axis_map = {"left_x": lx, "left_y": ly, "right_x": rx, "right_y": ry}
+    axis_map = {"left_x": lx, "left_y": ly, "left_twist": lt, "right_x": rx, "right_y": ry, "right_twist": rt}
     for axis_key, raw in axis_map.items():
         action = axes.get(axis_key)
         if action and abs(raw - CENTER) > deadzone:
@@ -1507,7 +1508,8 @@ def _load_arduino_config():
     if not os.path.exists(ARDUINO_CONFIG_PATH):
         return {
             "port": "/dev/ttyUSB0", "baud": 9600,
-            "pins": {"left_x": "A0", "left_y": "A1", "right_x": "A2", "right_y": "A3",
+            "pins": {"left_x": "A0", "left_y": "A1", "left_twist": "A2",
+                     "right_x": "A3", "right_y": "A4", "right_twist": "A5",
                      "btn1": "2", "btn2": "3", "btn3": "4", "estop": "5"},
             "deadzone": 30, "change_threshold": 8, "keepalive_ms": 500, "sample_ms": 50,
         }
@@ -1527,14 +1529,16 @@ def _generate_sketch(config):
         src = f.read()
     pins = config.get("pins", {})
     replacements = {
-        "{{PIN_LX}}":           pins.get("left_x",  "A0"),
-        "{{PIN_LY}}":           pins.get("left_y",  "A1"),
-        "{{PIN_RX}}":           pins.get("right_x", "A2"),
-        "{{PIN_RY}}":           pins.get("right_y", "A3"),
-        "{{PIN_BTN1}}":         pins.get("btn1",    "2"),
-        "{{PIN_BTN2}}":         pins.get("btn2",    "3"),
-        "{{PIN_BTN3}}":         pins.get("btn3",    "4"),
-        "{{PIN_ESTOP}}":        pins.get("estop",   "5"),
+        "{{PIN_LX}}":           pins.get("left_x",     "A0"),
+        "{{PIN_LY}}":           pins.get("left_y",     "A1"),
+        "{{PIN_LT}}":           pins.get("left_twist", "A2"),
+        "{{PIN_RX}}":           pins.get("right_x",    "A3"),
+        "{{PIN_RY}}":           pins.get("right_y",    "A4"),
+        "{{PIN_RT}}":           pins.get("right_twist","A5"),
+        "{{PIN_BTN1}}":         pins.get("btn1",       "2"),
+        "{{PIN_BTN2}}":         pins.get("btn2",       "3"),
+        "{{PIN_BTN3}}":         pins.get("btn3",       "4"),
+        "{{PIN_ESTOP}}":        pins.get("estop",      "5"),
         "{{DEADZONE}}":         str(config.get("deadzone",          30)),
         "{{CHANGE_THRESHOLD}}": str(config.get("change_threshold",   8)),
         "{{KEEPALIVE_MS}}":     str(config.get("keepalive_ms",     500)),
