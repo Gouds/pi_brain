@@ -156,7 +156,9 @@ async def flash():
         deadline = asyncio.get_event_loop().time() + 15
         while asyncio.get_event_loop().time() < deadline:
             if os.path.exists(FLASH_READY):
-                yield "data: Serial port released — starting flash\n\n"
+                yield "data: Serial port released — waiting for port to settle…\n\n"
+                await asyncio.sleep(2)
+                yield "data: Starting flash\n\n"
                 break
             await asyncio.sleep(0.3)
         else:
