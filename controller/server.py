@@ -42,6 +42,7 @@ FLASH_READY = "/tmp/pi_brain_flash_ready.lock"
 DEFAULT_CONFIG = {
     "port": "/dev/ttyUSB0",
     "baud": 9600,
+    "fqbn": "arduino:avr:nano:cpu=atmega328old",
     "pins": {
         "left_x": "A0", "left_y": "A1", "left_twist": "A2",
         "right_x": "A3", "right_y": "A4", "right_twist": "A5",
@@ -123,6 +124,7 @@ async def flash():
     _generate_sketch(config)
 
     port       = config.get("port", "/dev/ttyUSB0")
+    fqbn       = config.get("fqbn", "arduino:avr:nano:cpu=atmega328old")
     sketch_dir = os.path.abspath("arduino")
 
     if not shutil.which("arduino-cli"):
@@ -135,7 +137,7 @@ async def flash():
 
     cmd = [
         "arduino-cli", "compile",
-        "--fqbn", "arduino:avr:uno",
+        "--fqbn", fqbn,
         "--upload",
         "--port", port,
         sketch_dir,

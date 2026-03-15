@@ -157,6 +157,11 @@ export default function ArduinoConfig() {
       <div style={sectionHead}>Serial</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <div style={rowStyle}>
+          <span style={labelStyle}>Board FQBN</span>
+          <input style={{ ...sel, width: '260px' }} value={config.fqbn ?? 'arduino:avr:nano:cpu=atmega328old'} onChange={e => setField('fqbn', e.target.value)} placeholder="arduino:avr:nano:cpu=atmega328old" />
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>e.g. arduino:avr:uno · arduino:avr:nano:cpu=atmega328old</span>
+        </div>
+        <div style={rowStyle}>
           <span style={labelStyle}>Serial Port</span>
           <input style={{ ...sel, width: '160px' }} value={config.port ?? '/dev/ttyUSB0'} onChange={e => setField('port', e.target.value)} placeholder="/dev/ttyUSB0" />
           <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>USB port on the controller Pi</span>
