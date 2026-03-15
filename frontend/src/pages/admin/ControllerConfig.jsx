@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext, useRef } from 'react'
+import { useState, useEffect, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProfileContext } from '../../context/ProfileContext.js'
 import {
@@ -7,9 +7,6 @@ import {
   profileAdminGetServos,
   profileGetAudioCategories,
   profileGetScriptList,
-  arduinoGetConfig,
-  arduinoSaveConfig,
-  arduinoFlashUrl,
 } from '../../api/client.js'
 
 const AXIS_TYPES = [
@@ -38,14 +35,11 @@ const sel = {
   fontSize: '0.85rem',
 }
 
-const inp = {
-  ...sel,
-  width: '60px',
-}
+const inp = { ...sel, width: '60px' }
 
 const AXIS_LABELS = {
-  left_x: 'Left X (left/right)',
-  left_y: 'Left Y (up/down)',
+  left_x:  'Left X (left/right)',
+  left_y:  'Left Y (up/down)',
   right_x: 'Right X (twist)',
   right_y: 'Right Y (up/down)',
 }
@@ -117,17 +111,6 @@ function ActionFields({ action, onChange, servos, categories, scripts, typeOptio
   )
 }
 
-const PIN_LABELS = {
-  left_x:  'Left Joystick X',
-  left_y:  'Left Joystick Y',
-  right_x: 'Right Joystick X',
-  right_y: 'Right Joystick Y',
-  btn1:    'Button 1',
-  btn2:    'Button 2',
-  btn3:    'Button 3',
-  estop:   'E-Stop',
-}
-
 export default function ControllerConfig() {
   const { activeProfile } = useContext(ProfileContext)
   const navigate = useNavigate()
@@ -138,13 +121,6 @@ export default function ControllerConfig() {
   const [scripts, setScripts] = useState([])
   const [status, setStatus] = useState(null)
 
-  // Arduino config
-  const [arduinoConfig, setArduinoConfig] = useState(null)
-  const [arduinoStatus, setArduinoStatus] = useState(null)
-  const [flashLog, setFlashLog] = useState([])
-  const [flashing, setFlashing] = useState(false)
-  const logEndRef = useRef(null)
-
   useEffect(() => {
     if (!activeProfile?.id) return
     const pid = activeProfile.id
@@ -153,19 +129,13 @@ export default function ControllerConfig() {
       profileAdminGetServos(pid).catch(() => []),
       profileGetAudioCategories(pid).catch(() => []),
       profileGetScriptList(pid).catch(() => []),
-      arduinoGetConfig().catch(() => null),
-    ]).then(([jc, sv, cats, scr, ard]) => {
+    ]).then(([jc, sv, cats, scr]) => {
       setConfig(jc)
       setServos(Array.isArray(sv) ? sv : [])
       setCategories(Array.isArray(cats) ? cats : [])
       setScripts(Array.isArray(scr) ? scr.map(s => s.replace(/\.scr$/, '')) : [])
-      if (ard) setArduinoConfig(ard)
     })
   }, [activeProfile?.id])
-
-  useEffect(() => {
-    logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [flashLog])
 
   function setAxis(key, action) {
     setConfig(c => ({ ...c, axes: { ...c.axes, [key]: action } }))
@@ -182,43 +152,6 @@ export default function ControllerConfig() {
       setTimeout(() => setStatus(null), 2000)
     } catch {
       setStatus('Save failed')
-    }
-  }
-
-  async function saveArduino() {
-    try {
-      await arduinoSaveConfig(arduinoConfig)
-      setArduinoStatus('Saved!')
-      setTimeout(() => setArduinoStatus(null), 2000)
-    } catch {
-      setArduinoStatus('Save failed')
-    }
-  }
-
-  function setPin(key, val) {
-    setArduinoConfig(c => ({ ...c, pins: { ...c.pins, [key]: val } }))
-  }
-
-  function setArduinoField(key, val) {
-    setArduinoConfig(c => ({ ...c, [key]: val }))
-  }
-
-  async function flash() {
-    setFlashing(true)
-    setFlashLog([])
-    // Save config first so the sketch is regenerated
-    await arduinoSaveConfig(arduinoConfig).catch(() => {})
-    const es = new EventSource(arduinoFlashUrl())
-    es.onmessage = e => setFlashLog(prev => [...prev, e.data])
-    es.addEventListener('done', e => {
-      setFlashLog(prev => [...prev, e.data === 'success' ? '✓ Flash complete!' : `✗ Failed: ${e.data}`])
-      setFlashing(false)
-      es.close()
-    })
-    es.onerror = () => {
-      setFlashLog(prev => [...prev, '✗ Connection error'])
-      setFlashing(false)
-      es.close()
     }
   }
 
@@ -315,93 +248,6 @@ export default function ControllerConfig() {
       <div style={{ ...rowStyle, color: 'var(--danger)', fontWeight: 600, fontSize: '0.85rem' }}>
         Always stops all scripts and halts motion — not configurable.
       </div>
-
-      {/* Arduino Config */}
-      {arduinoConfig && (<>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '28px', marginBottom: '4px', flexWrap: 'wrap' }}>
-          <span style={{ ...sectionHead, margin: 0 }}>Arduino Configuration</span>
-          <button
-            onClick={saveArduino}
-            style={{ padding: '4px 14px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
-          >Save Config</button>
-          {arduinoStatus && <span style={{ color: arduinoStatus === 'Saved!' ? 'var(--success)' : 'var(--danger)', fontSize: '0.82rem' }}>{arduinoStatus}</span>}
-        </div>
-
-        {/* Port + Baud */}
-        <div style={{ ...rowStyle, marginBottom: '6px' }}>
-          <span style={labelStyle}>Serial Port</span>
-          <input style={{ ...sel, width: '140px' }} value={arduinoConfig.port ?? '/dev/ttyUSB0'} onChange={e => setArduinoField('port', e.target.value)} placeholder="/dev/ttyUSB0" />
-          <span style={labelStyle}>Baud Rate</span>
-          <input style={{ ...inp, width: '80px' }} type="number" value={arduinoConfig.baud ?? 9600} onChange={e => setArduinoField('baud', Number(e.target.value))} />
-        </div>
-
-        {/* Pins */}
-        <div style={sectionHead}>Pin Assignments</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '6px' }}>
-          {Object.keys(PIN_LABELS).map(key => (
-            <div key={key} style={rowStyle}>
-              <span style={{ ...labelStyle, minWidth: '130px' }}>{PIN_LABELS[key]}</span>
-              <input
-                style={{ ...inp, width: '60px' }}
-                value={arduinoConfig.pins?.[key] ?? ''}
-                onChange={e => setPin(key, e.target.value)}
-                placeholder="A0"
-              />
-            </div>
-          ))}
-        </div>
-
-        {/* Tuning */}
-        <div style={sectionHead}>Tuning</div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '16px' }}>
-          {[
-            { key: 'deadzone',         label: 'Dead zone',          unit: '' },
-            { key: 'change_threshold', label: 'Change threshold',   unit: '' },
-            { key: 'keepalive_ms',     label: 'Keepalive interval', unit: 'ms' },
-            { key: 'sample_ms',        label: 'Sample rate',        unit: 'ms' },
-          ].map(({ key, label, unit }) => (
-            <div key={key} style={rowStyle}>
-              <span style={{ ...labelStyle, minWidth: '130px' }}>{label}</span>
-              <input style={{ ...inp, width: '70px' }} type="number" value={arduinoConfig[key] ?? ''} onChange={e => setArduinoField(key, Number(e.target.value))} />
-              {unit && <span style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>{unit}</span>}
-            </div>
-          ))}
-        </div>
-
-        {/* Flash */}
-        <div style={sectionHead}>Flash Arduino</div>
-        <div style={{ marginBottom: '8px' }}>
-          <button
-            onClick={flash}
-            disabled={flashing}
-            style={{ padding: '8px 22px', background: flashing ? 'var(--bg-hover)' : 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: flashing ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: flashing ? 0.7 : 1 }}
-          >{flashing ? 'Flashing…' : 'Compile & Flash'}</button>
-          <span style={{ marginLeft: '12px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Saves config, generates sketch, compiles and uploads via arduino-cli
-          </span>
-        </div>
-
-        {flashLog.length > 0 && (
-          <div style={{
-            background: '#111',
-            border: '1px solid var(--border)',
-            borderRadius: '4px',
-            padding: '10px 12px',
-            fontSize: '0.75rem',
-            color: '#ccc',
-            fontFamily: 'monospace',
-            maxHeight: '260px',
-            overflowY: 'auto',
-            whiteSpace: 'pre-wrap',
-            lineHeight: '1.5',
-          }}>
-            {flashLog.map((line, i) => (
-              <div key={i} style={{ color: line.startsWith('✓') ? '#4caf50' : line.startsWith('✗') ? '#f44336' : '#ccc' }}>{line}</div>
-            ))}
-            <div ref={logEndRef} />
-          </div>
-        )}
-      </>)}
     </div>
   )
 }
