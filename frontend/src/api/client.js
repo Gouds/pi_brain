@@ -248,6 +248,20 @@ export const profileServoClose = (servoName, pid = _profileId) =>
 export const profileServoMove = (servoName, angle, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/servo/${encodeURIComponent(servoName)}/move/${angle}`).then(r => r.json())
 
+// ── Profile Joystick Config ───────────────────────────────────────────────────
+export const profileGetJoystickConfig = (pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/joystick`).then(r => r.json())
+
+export const profileSaveJoystickConfig = (config, pid = _profileId) =>
+  fetch(`${_apiUrl}/profiles/${pid}/joystick`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  }).then(r => r.json())
+
+export const activateProfileOnBackend = (pid) =>
+  fetch(`${_apiUrl}/profiles/${pid}/activate`, { method: 'PUT' }).then(r => r.json()).catch(() => {})
+
 // ── Profile Image ─────────────────────────────────────────────────────────────
 export const profileGetImageUrl = (pid = _profileId) =>
   `${_apiUrl}/profiles/${pid}/image`

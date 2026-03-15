@@ -581,21 +581,216 @@ async def stop_all_running_scripts():
 ######################
 # JOY STICK ITEMS - SERVOS
 #######################
-@app.post("/joystick/{command}", tags=["Joystick"])  # Change this line
+
+# Active profile tracked in memory (set by frontend on profile switch)
+_active_profile_id: str = None
+
+@app.put("/profiles/{profile_id}/activate", tags=["Joystick"])
+async def activate_profile(profile_id: str):
+    global _active_profile_id
+    _active_profile_id = profile_id
+    return {"active_profile": _active_profile_id}
+
+@app.get("/active-profile", tags=["Joystick"])
+async def get_active_profile():
+    return {"active_profile": _active_profile_id}
+
+def _profile_joystick_config_path(profile_id):
+    return os.path.join(PROFILES_DIR, profile_id, "joystick_config.json")
+
+def _load_joystick_config(profile_id):
+    path = _profile_joystick_config_path(profile_id)
+    if not os.path.exists(path):
+        return {
+            "deadzone": 30,
+            "axes": {"left_x": None, "left_y": None, "right_x": None, "right_y": None},
+            "buttons": {"b1": None, "b2": None, "b3": None},
+        }
+    with open(path) as f:
+        return json.load(f)
+
+def _save_joystick_config(profile_id, config):
+    os.makedirs(_profile_dir(profile_id), exist_ok=True)
+    with open(_profile_joystick_config_path(profile_id), "w") as f:
+        json.dump(config, f, indent=4)
+
+@app.get("/profiles/{profile_id}/joystick", tags=["Joystick"])
+async def profile_get_joystick_config(profile_id: str):
+    return _load_joystick_config(profile_id)
+
+@app.put("/profiles/{profile_id}/joystick", tags=["Joystick"])
+async def profile_save_joystick_config(profile_id: str, config: dict):
+    _save_joystick_config(profile_id, config)
+    return config
+
+async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int = None):
+    """Execute a single joystick button or axis action."""
+    if not action:
+        return
+    atype = action.get("type")
+
+    if atype == "servo_move" and axis_raw is not None:
+        servo_name = action.get("servo", "")
+        min_a = int(action.get("min_angle", 0))
+        max_a = int(action.get("max_angle", 180))
+        # Map 0-1023 to min_angle-max_angle
+        angle = int(min_a + (axis_raw / 1023.0) * (max_a - min_a))
+        angle = max(min_a, min(max_a, angle))
+        config = _load_profile_servo_config(profile_id)
+        for servo in config["servos"]:
+            if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", angle),
+                    angle,
+                    servo.get("speed", 100),
+                )
+                servo["position"] = angle
+        _save_profile_servo_config(profile_id, config)
+
+    elif atype == "servo_open":
+        servo_name = action.get("servo", "")
+        config = _load_profile_servo_config(profile_id)
+        for servo in config["servos"]:
+            if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["open_position"]),
+                    servo["open_position"],
+                    servo.get("speed", 100),
+                )
+                servo["position"] = servo["open_position"]
+        _save_profile_servo_config(profile_id, config)
+
+    elif atype == "servo_close":
+        servo_name = action.get("servo", "")
+        config = _load_profile_servo_config(profile_id)
+        for servo in config["servos"]:
+            if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["close_position"]),
+                    servo["close_position"],
+                    servo.get("speed", 100),
+                )
+                servo["position"] = servo["close_position"]
+        _save_profile_servo_config(profile_id, config)
+
+    elif atype == "servo_open_all":
+        config = _load_profile_servo_config(profile_id)
+        for servo in config["servos"]:
+            if servo["bus"] in i2c_servo_controls:
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["open_position"]),
+                    servo["open_position"],
+                    servo.get("speed", 100),
+                )
+                servo["position"] = servo["open_position"]
+        _save_profile_servo_config(profile_id, config)
+
+    elif atype == "servo_close_all":
+        config = _load_profile_servo_config(profile_id)
+        for servo in config["servos"]:
+            if servo["bus"] in i2c_servo_controls:
+                await _move_with_speed(
+                    i2c_servo_controls[servo["bus"]].kit,
+                    servo["id"],
+                    servo.get("position", servo["close_position"]),
+                    servo["close_position"],
+                    servo.get("speed", 100),
+                )
+                servo["position"] = servo["close_position"]
+        _save_profile_servo_config(profile_id, config)
+
+    elif atype == "audio_play":
+        filename = action.get("file", "")
+        filepath = os.path.join(_profile_audio_dir(profile_id), filename)
+        if os.path.exists(filepath):
+            try:
+                import pygame
+                pygame.mixer.music.load(filepath)
+                pygame.mixer.music.play()
+            except Exception:
+                print(f"[MOCK AUDIO] would play: {filepath}")
+
+    elif atype == "audio_random":
+        import random as _random
+        category = action.get("category", "")
+        audio_dir = _profile_audio_dir(profile_id)
+        tags = _load_audio_tags(profile_id)
+        files = [
+            f for f in os.listdir(audio_dir)
+            if tags.get(f) == category and f.endswith((".mp3", ".wav", ".ogg"))
+        ] if os.path.exists(audio_dir) else []
+        if files:
+            chosen = _random.choice(files)
+            filepath = os.path.join(audio_dir, chosen)
+            try:
+                import pygame
+                pygame.mixer.music.load(filepath)
+                pygame.mixer.music.play()
+            except Exception:
+                print(f"[MOCK AUDIO] would play random: {chosen}")
+
+    elif atype == "script_run":
+        name = action.get("name", "")
+        if name:
+            import aiohttp
+            async with aiohttp.ClientSession() as session:
+                await session.get(
+                    f"http://localhost:8000/profiles/{profile_id}/scripts/start/{name}/0"
+                )
+
+    elif atype == "estop":
+        await stop_all_scripts()
+
+
+@app.post("/joystick/{command}", tags=["Joystick"])
 async def joystick_command(command: str):
-    print('Joystick endpoint hit')  # Add this line
-    print(f'Received command: {command}')
-    positions = command.split('-')  # Change this line
-    if len(positions) != 6:
-        return {"error": "Expected 6 positions"}
+    profile_id = _active_profile_id
+    if not profile_id:
+        return {"error": "No active profile set"}
 
-    # Now positions is a list of 6 strings
-    # You can access the positions with positions[0], positions[1], etc.
-    # Replace this with your actual code to handle the joystick commands
-    for i, position in enumerate(positions):
-        print(f'Position {i + 1}: {position}')
+    parts = command.split('-')
+    if len(parts) != 6:
+        return {"error": "Expected 6 values (LX-LY-RX-RY-BTN-ESTOP)"}
 
-    return {"message": f"Received joystick command: {positions}"}
+    try:
+        lx, ly, rx, ry, btn, estop = [int(p) for p in parts]
+    except ValueError:
+        return {"error": "All values must be integers"}
+
+    jc = _load_joystick_config(profile_id)
+    deadzone = int(jc.get("deadzone", 30))
+    axes = jc.get("axes", {})
+    buttons = jc.get("buttons", {})
+    CENTER = 512
+
+    # Dispatch axes — only if outside deadzone
+    axis_map = {"left_x": lx, "left_y": ly, "right_x": rx, "right_y": ry}
+    for axis_key, raw in axis_map.items():
+        action = axes.get(axis_key)
+        if action and abs(raw - CENTER) > deadzone:
+            await _dispatch_joystick_action(profile_id, action, axis_raw=raw)
+
+    # E-stop takes priority over buttons
+    if estop:
+        await _dispatch_joystick_action(profile_id, {"type": "estop"})
+        return {"ok": True, "estop": True}
+
+    # Dispatch buttons (bitmask: bit0=b1, bit1=b2, bit2=b3)
+    for i, btn_key in enumerate(["b1", "b2", "b3"]):
+        if btn & (1 << i):
+            action = buttons.get(btn_key)
+            if action:
+                await _dispatch_joystick_action(profile_id, action)
+
+    return {"ok": True}
 
 
 #######################

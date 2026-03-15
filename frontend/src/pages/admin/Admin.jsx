@@ -8,6 +8,7 @@ export default function Admin() {
         <li><Link to="/admin/servos">Edit Servos</Link></li>
         <li><Link to="/admin/buses">Edit I2C Buses</Link></li>
         <li><Link to="/admin/connection">Connection</Link></li>
+        <li><Link to="/admin/controller">Controller Config</Link></li>
       </ul>
     </div>
   )

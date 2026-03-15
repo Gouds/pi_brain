@@ -80,6 +80,7 @@ const NAV_BTN = {
 
 export default function Body() {
   const { activeProfile } = useContext(ProfileContext)
+  const { isRecording, record } = useRecording()
   const [servos, setServos] = useState([])
   const [positions, setPositions] = useState({})
   const [activeTab, setActiveTab] = useState('All')
@@ -119,11 +120,17 @@ export default function Body() {
 
   function openAll() {
     setPositions(p => { const n = { ...p }; visible.forEach(s => { n[s.name] = s.open_position }); return n })
-    visible.forEach(s => profileServoOpen(s.name).catch(() => {}))
+    visible.forEach(s => {
+      profileServoOpen(s.name).catch(() => {})
+      if (isRecording) record({ type: 'servo_open', servo: s.name })
+    })
   }
   function closeAll() {
     setPositions(p => { const n = { ...p }; visible.forEach(s => { n[s.name] = s.close_position }); return n })
-    visible.forEach(s => profileServoClose(s.name).catch(() => {}))
+    visible.forEach(s => {
+      profileServoClose(s.name).catch(() => {})
+      if (isRecording) record({ type: 'servo_close', servo: s.name })
+    })
   }
 
   return (

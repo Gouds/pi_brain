@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { BUILTIN_PROFILES } from '../profiles/builtins.js'
 import { getProfiles } from '../api/profiles.js'
-import { setApiUrl, setProfileId } from '../api/client.js'
+import { setApiUrl, setProfileId, activateProfileOnBackend } from '../api/client.js'
 import { DEFAULT_API_URL } from '../config.js'
 
 export function useProfile() {
@@ -71,6 +71,7 @@ export function useProfile() {
     // Update API URL and profile ID (fall back to auto-detected default)
     setApiUrl(activeProfile.robot.api_url || DEFAULT_API_URL)
     setProfileId(activeProfile.id)
+    activateProfileOnBackend(activeProfile.id)
 
     // Persist active profile ID
     localStorage.setItem('pi-active-profile', activeProfile.id)
