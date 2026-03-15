@@ -325,7 +325,7 @@ export default function ArduinoConfig() {
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/admin')} style={{ ...sel, cursor: 'pointer', padding: '5px 10px' }}>← Admin</button>
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Arduino Config</h2>
-        <button onClick={save} style={{ marginLeft: 'auto', padding: '6px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+        <button onClick={save} style={{ marginLeft: 'auto', padding: '6px 18px', background: 'var(--btn-primary)', color: 'var(--btn-primary-text)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
         {status && <span style={{ color: status === 'Saved!' ? 'var(--success)' : 'var(--danger)', fontSize: '0.85rem' }}>{status}</span>}
       </div>
 
@@ -368,7 +368,7 @@ export default function ArduinoConfig() {
         <span style={{ ...sectionHead, margin: 0 }}>Pin Assignments</span>
         <button
           onClick={() => setWizarding(true)}
-          style={{ padding: '3px 12px', fontSize: '0.78rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+          style={{ padding: '3px 12px', fontSize: '0.78rem', background: 'var(--btn-primary)', color: 'var(--btn-primary-text)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
         >Calibrate Pins…</button>
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Move each axis to auto-detect</span>
       </div>

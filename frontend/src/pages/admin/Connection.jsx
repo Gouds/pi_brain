@@ -105,7 +105,7 @@ export default function Connection() {
         />
         <button
           onClick={handleSave}
-          style={{ padding: '8px 16px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 500 }}
+          style={{ padding: '8px 16px', background: 'var(--btn-primary)', color: 'var(--btn-primary-text)', border: 'none', borderRadius: 4, cursor: 'pointer', fontWeight: 500 }}
         >Save</button>
         <button
           onClick={handleClear}

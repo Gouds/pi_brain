@@ -9,6 +9,7 @@ const REQUIRED_COLOR_KEYS = [
   '--border', '--border-strong', '--accent', '--accent-dim',
   '--text-primary', '--text-secondary', '--text-muted',
   '--success', '--danger',
+  '--btn-primary', '--btn-primary-text',
 ]
 
 const ALL_FEATURES = ['home', 'dome', 'body', 'audio', 'scripts']
@@ -237,7 +238,7 @@ function RobotForm({ editingProfile, initialStyleId = 'dark', onSave, onCancel }
         api_url: editingProfile.robot.api_url,
         features: [...editingProfile.robot.features],
         base_style_id: initialStyleId,
-        colors: { ...editingProfile.colors },
+        colors: { '--btn-primary': '#2563eb', '--btn-primary-text': '#ffffff', ...editingProfile.colors },
       }
     }
     const base = BUILTIN_PROFILES.find(p => p.id === initialStyleId) ?? BUILTIN_PROFILES[0]

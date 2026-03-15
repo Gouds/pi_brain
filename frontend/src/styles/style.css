@@ -22,6 +22,8 @@
     --text-muted:    #3a3a3a;
     --success:       #22c55e;
     --danger:        #ef4444;
+    --btn-primary:      #2563eb;
+    --btn-primary-text: #ffffff;
     --font-display:  'Bungee', sans-serif;
     --font-ui:       system-ui, sans-serif;
 }

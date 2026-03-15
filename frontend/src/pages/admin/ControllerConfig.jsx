@@ -212,7 +212,7 @@ export default function ControllerConfig() {
           onClick={() => setMonitor(m => !m)}
           style={{ marginLeft: 'auto', padding: '6px 14px', background: monitor ? 'var(--success)' : 'var(--bg-surface)', color: monitor ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
         >{monitor ? '● Live' : 'Monitor'}</button>
-        <button onClick={save} style={{ padding: '6px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+        <button onClick={save} style={{ padding: '6px 18px', background: 'var(--btn-primary)', color: 'var(--btn-primary-text)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
         {status && <span style={{ color: status === 'Saved!' ? 'var(--success)' : 'var(--danger)', fontSize: '0.85rem' }}>{status}</span>}
       </div>
 

@@ -152,7 +152,7 @@ function ServoCard({ servo, onUpdate }) {
           disabled={busy}
           style={{
             flex: 1, padding: '6px 0',
-            background: 'var(--accent)', color: '#fff',
+            background: 'var(--btn-primary)', color: 'var(--btn-primary-text)',
             border: 'none', borderRadius: 4,
             cursor: busy ? 'not-allowed' : 'pointer',
             opacity: busy ? 0.6 : 1,

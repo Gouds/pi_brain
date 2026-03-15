@@ -225,7 +225,7 @@ export default function ScriptEditor() {
           style={{ ...inp, width: '180px', fontSize: '1rem', padding: '5px 8px' }}
         />
         <button onClick={save}
-          style={{ padding: '6px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
+          style={{ padding: '6px 18px', background: 'var(--btn-primary)', color: 'var(--btn-primary-text)', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>
           Save
         </button>
         {status && <span style={{ color: status.startsWith('error') ? 'var(--danger)' : 'var(--success)', fontSize: '0.85rem' }}>{status}</span>}
