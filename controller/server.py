@@ -15,6 +15,7 @@ import asyncio
 import json
 import os
 import shutil
+import serial
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -143,7 +144,17 @@ async def flash():
         # Signal controller.py to release the serial port
         open(FLASH_LOCK, 'w').close()
         yield "data: Waiting for serial port to be released…\n\n"
-        await asyncio.sleep(2)
+
+        # Poll until the port is actually free (up to 10s)
+        deadline = asyncio.get_event_loop().time() + 10
+        while asyncio.get_event_loop().time() < deadline:
+            try:
+                with serial.Serial(port, timeout=0.2):
+                    break  # opened successfully — port is free
+            except Exception:
+                await asyncio.sleep(0.5)
+        else:
+            yield "data: WARNING: port may still be in use — attempting flash anyway\n\n"
 
         yield f"data: Running: {' '.join(cmd)}\n\n"
         try:
