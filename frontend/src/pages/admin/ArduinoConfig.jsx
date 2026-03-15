@@ -142,10 +142,10 @@ function CalibrationWizard({ config, onDone, onCancel }) {
             return (
               <div key={k} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{
-                  width: '80px', fontSize: '0.75rem', color: isTop ? 'var(--accent)' : 'var(--text-muted)',
+                  width: '40px', fontSize: '0.75rem', color: isTop ? 'var(--accent)' : 'var(--text-muted)',
                   fontWeight: isTop ? 700 : 400,
                 }}>
-                  {SLOT_ORDER[i].replace('_', ' ')} ({config.pins?.[SLOT_ORDER[i]] ?? `A${i}`})
+                  {config.pins?.[SLOT_ORDER[i]] ?? `A${i}`}
                 </span>
                 <div style={{ flex: 1, height: '10px', background: 'var(--bg-hover)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{
@@ -162,8 +162,7 @@ function CalibrationWizard({ config, onDone, onCancel }) {
 
         {detected !== null ? (
           <div style={{ marginBottom: '12px', fontSize: '0.85rem', color: 'var(--accent)' }}>
-            ✓ Detected: <strong>{SLOT_ORDER[detected].replace('_', ' ')}</strong> (pin {config.pins?.[SLOT_ORDER[detected]] ?? `A${detected}`})
-            {' '}→ assign to <strong>{current.key.replace('_', ' ')}</strong>
+            ✓ Movement detected on pin <strong>{config.pins?.[SLOT_ORDER[detected]] ?? `A${detected}`}</strong> — assign to <strong>{current.key.replace('_', ' ')}</strong>?
           </div>
         ) : (
           <div style={{ marginBottom: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
