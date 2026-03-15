@@ -1501,8 +1501,8 @@ async def profile_image_delete(profile_id: str):
 #######################
 
 ARDUINO_CONFIG_PATH = os.path.join("configs", "arduino_config.json")
-ARDUINO_TEMPLATE_PATH = os.path.join("arduino", "controller.ino.template")
-ARDUINO_SKETCH_PATH = os.path.join("arduino", "controller.ino")
+ARDUINO_TEMPLATE_PATH = os.path.join("arduino", "arduino.ino.template")
+ARDUINO_SKETCH_PATH = os.path.join("arduino", "arduino.ino")
 
 def _load_arduino_config():
     if not os.path.exists(ARDUINO_CONFIG_PATH):
