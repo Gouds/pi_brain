@@ -91,24 +91,25 @@ function CalibrationWizard({ config, onDone, onCancel }) {
 
   function confirm() {
     if (detected === null) return
-    const axisKey  = AXIS_STEPS[step].key
-    const slotKey  = SLOT_ORDER[detected]
-    const pin      = config.pins?.[slotKey] ?? `A${detected}`
-    setMapping(m => ({ ...m, [axisKey]: pin }))
-    advance()
+    const axisKey    = AXIS_STEPS[step].key
+    const slotKey    = SLOT_ORDER[detected]
+    const pin        = config.pins?.[slotKey] ?? `A${detected}`
+    const newMapping = { ...mapping, [axisKey]: pin }
+    setMapping(newMapping)
+    advance(newMapping)
   }
 
   function skip() {
-    // Keep existing pin for this axis
-    const axisKey = AXIS_STEPS[step].key
-    setMapping(m => ({ ...m, [axisKey]: config.pins?.[axisKey] ?? `A${step}` }))
-    advance()
+    const axisKey    = AXIS_STEPS[step].key
+    const newMapping = { ...mapping, [axisKey]: config.pins?.[axisKey] ?? `A${step}` }
+    setMapping(newMapping)
+    advance(newMapping)
   }
 
-  function advance() {
+  function advance(newMapping) {
     if (step + 1 >= AXIS_STEPS.length) {
       esRef.current?.close()
-      onDone(mapping)
+      onDone(newMapping)
     } else {
       setStep(s => s + 1)
     }
