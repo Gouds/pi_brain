@@ -26,6 +26,11 @@ const PIN_LABELS = {
   estop:       'E-Stop',
 }
 
+// Arduino Nano available pins
+const ANALOG_PINS  = ['A0','A1','A2','A3','A4','A5','A6','A7']
+const DIGITAL_PINS = ['2','3','4','5','6','7','8','9','10','11','12','13']
+const ANALOG_KEYS  = ['left_x','left_y','left_twist','right_x','right_y','right_twist']
+
 // ── Calibration Wizard ────────────────────────────────────────────────────────
 
 const AXIS_STEPS = [
@@ -367,17 +372,29 @@ export default function ArduinoConfig() {
         <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Move each axis to auto-detect</span>
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
-        {Object.keys(PIN_LABELS).map(key => (
-          <div key={key} style={rowStyle}>
-            <span style={labelStyle}>{PIN_LABELS[key]}</span>
-            <input
-              style={{ ...inp, width: '60px' }}
-              value={config.pins?.[key] ?? ''}
-              onChange={e => setPin(key, e.target.value)}
-              placeholder="A0"
-            />
-          </div>
-        ))}
+        {Object.keys(PIN_LABELS).map(key => {
+          const isAnalog = ANALOG_KEYS.includes(key)
+          const options  = isAnalog ? ANALOG_PINS : DIGITAL_PINS
+          const current  = config.pins?.[key] ?? ''
+          return (
+            <div key={key} style={rowStyle}>
+              <span style={labelStyle}>{PIN_LABELS[key]}</span>
+              <select
+                style={{ ...sel, width: '80px' }}
+                value={current}
+                onChange={e => setPin(key, e.target.value)}
+              >
+                {!options.includes(current) && current && (
+                  <option value={current}>{current}</option>
+                )}
+                {options.map(p => <option key={p} value={p}>{p}</option>)}
+              </select>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                {isAnalog ? 'analog' : 'digital'}
+              </span>
+            </div>
+          )
+        })}
       </div>
 
       {/* Tuning */}
