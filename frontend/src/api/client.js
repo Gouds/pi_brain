@@ -259,8 +259,6 @@ export const arduinoSaveConfig = (config) =>
     body: JSON.stringify(config),
   }).then(r => r.json())
 
-export const arduinoFlashUrl = () => `${_apiUrl}/admin/arduino/flash`
-
 // ── Profile Joystick Config ───────────────────────────────────────────────────
 export const profileGetJoystickConfig = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/joystick`).then(r => r.json())

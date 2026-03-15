@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { arduinoGetConfig, arduinoSaveConfig, arduinoFlashUrl } from '../../api/client.js'
+import { arduinoGetConfig, arduinoSaveConfig } from '../../api/client.js'
 
 const sel = {
   background: 'var(--bg-secondary)',
@@ -14,16 +14,16 @@ const sel = {
 const inp = { ...sel, width: '60px' }
 
 const PIN_LABELS = {
-  left_x:     'Left Joystick X',
-  left_y:     'Left Joystick Y',
-  left_twist: 'Left Joystick Twist',
-  right_x:    'Right Joystick X',
-  right_y:    'Right Joystick Y',
-  right_twist:'Right Joystick Twist',
-  btn1:       'Button 1',
-  btn2:       'Button 2',
-  btn3:       'Button 3',
-  estop:      'E-Stop',
+  left_x:      'Left Joystick X',
+  left_y:      'Left Joystick Y',
+  left_twist:  'Left Joystick Twist',
+  right_x:     'Right Joystick X',
+  right_y:     'Right Joystick Y',
+  right_twist: 'Right Joystick Twist',
+  btn1:        'Button 1',
+  btn2:        'Button 2',
+  btn3:        'Button 3',
+  estop:       'E-Stop',
 }
 
 export default function ArduinoConfig() {
@@ -61,10 +61,31 @@ export default function ArduinoConfig() {
   }
 
   async function flash() {
+    const controllerUrl = (config.controller_url ?? '').trim().replace(/\/$/, '')
+    if (!controllerUrl) {
+      setFlashLog(['✗ Set the Controller URL before flashing'])
+      return
+    }
+
     setFlashing(true)
-    setFlashLog([])
+    setFlashLog([`Connecting to controller at ${controllerUrl}…`])
+
+    // Save config to brain Pi first (persistence), then push to controller Pi
     await arduinoSaveConfig(config).catch(() => {})
-    const es = new EventSource(arduinoFlashUrl())
+
+    try {
+      await fetch(`${controllerUrl}/admin/arduino/config`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
+      })
+    } catch {
+      setFlashLog(prev => [...prev, '✗ Could not reach controller — is server.py running?'])
+      setFlashing(false)
+      return
+    }
+
+    const es = new EventSource(`${controllerUrl}/admin/arduino/flash`)
     es.onmessage = e => setFlashLog(prev => [...prev, e.data])
     es.addEventListener('done', e => {
       setFlashLog(prev => [...prev, e.data === 'success' ? '✓ Flash complete!' : `✗ Failed: ${e.data}`])
@@ -72,7 +93,7 @@ export default function ArduinoConfig() {
       es.close()
     })
     es.onerror = () => {
-      setFlashLog(prev => [...prev, '✗ Connection error'])
+      setFlashLog(prev => [...prev, '✗ Connection lost'])
       setFlashing(false)
       es.close()
     }
@@ -117,12 +138,28 @@ export default function ArduinoConfig() {
         {status && <span style={{ color: status === 'Saved!' ? 'var(--success)' : 'var(--danger)', fontSize: '0.85rem' }}>{status}</span>}
       </div>
 
-      {/* Port + Baud */}
+      {/* Controller URL */}
+      <div style={sectionHead}>Controller Pi</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+        <div style={rowStyle}>
+          <span style={labelStyle}>Controller URL</span>
+          <input
+            style={{ ...sel, width: '220px' }}
+            value={config.controller_url ?? ''}
+            onChange={e => setField('controller_url', e.target.value)}
+            placeholder="http://192.168.x.x:8001"
+          />
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Mini backend running on the controller Pi</span>
+        </div>
+      </div>
+
+      {/* Serial */}
       <div style={sectionHead}>Serial</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <div style={rowStyle}>
           <span style={labelStyle}>Serial Port</span>
           <input style={{ ...sel, width: '160px' }} value={config.port ?? '/dev/ttyUSB0'} onChange={e => setField('port', e.target.value)} placeholder="/dev/ttyUSB0" />
+          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>USB port on the controller Pi</span>
         </div>
         <div style={rowStyle}>
           <span style={labelStyle}>Baud Rate</span>
@@ -172,7 +209,7 @@ export default function ArduinoConfig() {
           style={{ padding: '8px 22px', background: flashing ? 'var(--bg-hover)' : 'var(--success)', color: '#fff', border: 'none', borderRadius: '4px', cursor: flashing ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '0.9rem', opacity: flashing ? 0.7 : 1 }}
         >{flashing ? 'Flashing…' : 'Compile & Flash'}</button>
         <span style={{ marginLeft: '12px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-          Saves config, regenerates sketch, compiles and uploads via arduino-cli
+          Sends config to controller Pi, compiles and uploads via arduino-cli there
         </span>
       </div>
 

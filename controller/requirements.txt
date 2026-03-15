@@ -1,0 +1,5 @@
+# Controller Pi dependencies (much lighter than the full brain stack)
+fastapi
+uvicorn[standard]
+requests
+pyserial
