@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { arduinoGetConfig, arduinoSaveConfig } from '../../api/client.js'
+import { arduinoGetConfig, arduinoSaveConfig, getApiUrl } from '../../api/client.js'
 
 const sel = {
   background: 'var(--bg-secondary)',
@@ -26,12 +26,184 @@ const PIN_LABELS = {
   estop:       'E-Stop',
 }
 
+// ── Calibration Wizard ────────────────────────────────────────────────────────
+
+const AXIS_STEPS = [
+  { key: 'left_x',     label: 'LEFT joystick',  motion: 'left and right' },
+  { key: 'left_y',     label: 'LEFT joystick',  motion: 'up and down' },
+  { key: 'left_twist', label: 'LEFT joystick',  motion: 'twist (rotate)' },
+  { key: 'right_x',   label: 'RIGHT joystick', motion: 'left and right' },
+  { key: 'right_y',   label: 'RIGHT joystick', motion: 'up and down' },
+  { key: 'right_twist', label: 'RIGHT joystick', motion: 'twist (rotate)' },
+]
+
+// Order that the Arduino sends values — matches config pin keys
+const SLOT_ORDER = ['left_x', 'left_y', 'left_twist', 'right_x', 'right_y', 'right_twist']
+const SLOT_KEYS  = ['lx', 'ly', 'lt', 'rx', 'ry', 'rt']
+
+function CalibrationWizard({ config, onDone, onCancel }) {
+  const [step, setStep]           = useState(0)
+  const [values, setValues]       = useState({ lx: 512, ly: 512, lt: 512, rx: 512, ry: 512, rt: 512 })
+  const [baseline, setBaseline]   = useState(null)
+  const [detected, setDetected]   = useState(null)   // slot index 0-5
+  const [mapping, setMapping]     = useState({})      // key → pin string
+  const esRef                     = useRef(null)
+
+  // (re)connect SSE stream on mount and keep values fresh
+  useEffect(() => {
+    const es = new EventSource(`${getApiUrl()}/joystick/stream`)
+    esRef.current = es
+    es.onmessage = e => {
+      try {
+        const d = JSON.parse(e.data)
+        setValues(d)
+      } catch {}
+    }
+    return () => es.close()
+  }, [])
+
+  // On step change: reset baseline after a short settle
+  useEffect(() => {
+    setBaseline(null)
+    setDetected(null)
+    const t = setTimeout(() => {
+      setValues(v => { setBaseline(v); return v })
+    }, 600)
+    return () => clearTimeout(t)
+  }, [step])
+
+  // Detect which slot is moving most vs baseline
+  useEffect(() => {
+    if (!baseline) return
+    let maxDelta = 40  // minimum movement to count as "detected"
+    let maxIdx   = null
+    SLOT_KEYS.forEach((k, i) => {
+      const delta = Math.abs((values[k] ?? 512) - (baseline[k] ?? 512))
+      if (delta > maxDelta) { maxDelta = delta; maxIdx = i }
+    })
+    setDetected(maxIdx)
+  }, [values, baseline])
+
+  function confirm() {
+    if (detected === null) return
+    const axisKey  = AXIS_STEPS[step].key
+    const slotKey  = SLOT_ORDER[detected]
+    const pin      = config.pins?.[slotKey] ?? `A${detected}`
+    setMapping(m => ({ ...m, [axisKey]: pin }))
+    advance()
+  }
+
+  function skip() {
+    // Keep existing pin for this axis
+    const axisKey = AXIS_STEPS[step].key
+    setMapping(m => ({ ...m, [axisKey]: config.pins?.[axisKey] ?? `A${step}` }))
+    advance()
+  }
+
+  function advance() {
+    if (step + 1 >= AXIS_STEPS.length) {
+      esRef.current?.close()
+      onDone(mapping)
+    } else {
+      setStep(s => s + 1)
+    }
+  }
+
+  const current = AXIS_STEPS[step]
+
+  const overlayStyle = {
+    position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.75)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+  }
+  const boxStyle = {
+    background: 'var(--bg-primary)', border: '1px solid var(--border)',
+    borderRadius: '8px', padding: '24px', width: '420px', maxWidth: '95vw',
+  }
+
+  return (
+    <div style={overlayStyle}>
+      <div style={boxStyle}>
+        <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '4px' }}>
+          Step {step + 1} of {AXIS_STEPS.length}
+        </div>
+        <h3 style={{ margin: '0 0 6px', fontSize: '1rem' }}>
+          {current.label.replace('LEFT', '').replace('RIGHT', '').trim()} Axis Calibration
+        </h3>
+        <div style={{ marginBottom: '16px', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+          Move <strong>{current.label}</strong> {current.motion}
+        </div>
+
+        {/* Live bars */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
+          {SLOT_KEYS.map((k, i) => {
+            const val   = values[k] ?? 512
+            const pct   = Math.round((val / 1023) * 100)
+            const isTop = detected === i
+            return (
+              <div key={k} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{
+                  width: '80px', fontSize: '0.75rem', color: isTop ? 'var(--accent)' : 'var(--text-muted)',
+                  fontWeight: isTop ? 700 : 400,
+                }}>
+                  {SLOT_ORDER[i].replace('_', ' ')} ({config.pins?.[SLOT_ORDER[i]] ?? `A${i}`})
+                </span>
+                <div style={{ flex: 1, height: '10px', background: 'var(--bg-hover)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{
+                    width: `${pct}%`, height: '100%',
+                    background: isTop ? 'var(--accent)' : 'var(--border)',
+                    transition: 'width 0.05s',
+                  }} />
+                </div>
+                <span style={{ width: '34px', fontSize: '0.72rem', color: 'var(--text-muted)', textAlign: 'right' }}>{val}</span>
+              </div>
+            )
+          })}
+        </div>
+
+        {detected !== null ? (
+          <div style={{ marginBottom: '12px', fontSize: '0.85rem', color: 'var(--accent)' }}>
+            ✓ Detected: <strong>{SLOT_ORDER[detected].replace('_', ' ')}</strong> (pin {config.pins?.[SLOT_ORDER[detected]] ?? `A${detected}`})
+            {' '}→ assign to <strong>{current.key.replace('_', ' ')}</strong>
+          </div>
+        ) : (
+          <div style={{ marginBottom: '12px', fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+            Waiting for movement…
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            onClick={confirm}
+            disabled={detected === null}
+            style={{
+              padding: '7px 18px', background: detected !== null ? 'var(--accent)' : 'var(--bg-hover)',
+              color: '#fff', border: 'none', borderRadius: '4px', cursor: detected !== null ? 'pointer' : 'not-allowed',
+              fontWeight: 600,
+            }}
+          >Confirm</button>
+          <button
+            onClick={skip}
+            style={{ padding: '7px 14px', background: 'var(--bg-surface)', color: 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer' }}
+          >Skip</button>
+          <button
+            onClick={() => { esRef.current?.close(); onCancel() }}
+            style={{ marginLeft: 'auto', padding: '7px 14px', background: 'transparent', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer' }}
+          >Cancel</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Main Page ─────────────────────────────────────────────────────────────────
+
 export default function ArduinoConfig() {
   const navigate = useNavigate()
-  const [config, setConfig] = useState(null)
-  const [status, setStatus] = useState(null)
-  const [flashLog, setFlashLog] = useState([])
-  const [flashing, setFlashing] = useState(false)
+  const [config, setConfig]       = useState(null)
+  const [status, setStatus]       = useState(null)
+  const [flashLog, setFlashLog]   = useState([])
+  const [flashing, setFlashing]   = useState(false)
+  const [wizarding, setWizarding] = useState(false)
   const logEndRef = useRef(null)
 
   useEffect(() => {
@@ -99,6 +271,13 @@ export default function ArduinoConfig() {
     }
   }
 
+  function handleWizardDone(mapping) {
+    // mapping: { left_x: 'A2', left_y: 'A0', ... }
+    setConfig(c => ({ ...c, pins: { ...c.pins, ...mapping } }))
+    setWizarding(false)
+    setStatus('Pins updated — remember to Save & Flash!')
+  }
+
   if (!config) return <div style={{ padding: 16 }}>Loading…</div>
 
   const rowStyle = {
@@ -131,6 +310,13 @@ export default function ArduinoConfig() {
 
   return (
     <div style={{ padding: '16px', maxWidth: '760px' }}>
+      {wizarding && (
+        <CalibrationWizard
+          config={config}
+          onDone={handleWizardDone}
+          onCancel={() => setWizarding(false)}
+        />
+      )}
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' }}>
         <button onClick={() => navigate('/admin')} style={{ ...sel, cursor: 'pointer', padding: '5px 10px' }}>← Admin</button>
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Arduino Config</h2>
@@ -173,7 +359,14 @@ export default function ArduinoConfig() {
       </div>
 
       {/* Pins */}
-      <div style={sectionHead}>Pin Assignments</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '16px', marginBottom: '4px' }}>
+        <span style={{ ...sectionHead, margin: 0 }}>Pin Assignments</span>
+        <button
+          onClick={() => setWizarding(true)}
+          style={{ padding: '3px 12px', fontSize: '0.78rem', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+        >Calibrate Pins…</button>
+        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Move each axis to auto-detect</span>
+      </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px' }}>
         {Object.keys(PIN_LABELS).map(key => (
           <div key={key} style={rowStyle}>

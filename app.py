@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, File, UploadFile, Query, BackgroundTasks
-from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse
+from fastapi.responses import JSONResponse, PlainTextResponse, FileResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 import mimetypes
@@ -585,6 +585,10 @@ async def stop_all_running_scripts():
 # Active profile tracked in memory (set by frontend on profile switch)
 _active_profile_id: str = None
 
+# Latest raw joystick reading + subscribers for the calibration stream
+_latest_joystick: dict = {}
+_joystick_queues: list = []
+
 @app.put("/profiles/{profile_id}/activate", tags=["Joystick"])
 async def activate_profile(profile_id: str):
     global _active_profile_id
@@ -751,8 +755,34 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         await stop_all_scripts()
 
 
+@app.get("/joystick/stream", tags=["Joystick"])
+async def joystick_stream():
+    """SSE stream of raw joystick values — used by the calibration wizard."""
+    q: asyncio.Queue = asyncio.Queue(maxsize=20)
+    _joystick_queues.append(q)
+
+    async def generate():
+        try:
+            if _latest_joystick:
+                yield f"data: {json.dumps(_latest_joystick)}\n\n"
+            while True:
+                try:
+                    data = await asyncio.wait_for(q.get(), timeout=5.0)
+                    yield f"data: {json.dumps(data)}\n\n"
+                except asyncio.TimeoutError:
+                    yield ": keepalive\n\n"
+        finally:
+            try:
+                _joystick_queues.remove(q)
+            except ValueError:
+                pass
+
+    return StreamingResponse(generate(), media_type="text/event-stream")
+
+
 @app.post("/joystick/{command}", tags=["Joystick"])
 async def joystick_command(command: str):
+    global _latest_joystick
     profile_id = _active_profile_id
     if not profile_id:
         return {"error": "No active profile set"}
@@ -765,6 +795,15 @@ async def joystick_command(command: str):
         lx, ly, lt, rx, ry, rt, btn, estop = [int(p) for p in parts]
     except ValueError:
         return {"error": "All values must be integers"}
+
+    # Broadcast raw values to any calibration wizard subscribers
+    raw = {"lx": lx, "ly": ly, "lt": lt, "rx": rx, "ry": ry, "rt": rt, "btn": btn, "estop": estop}
+    _latest_joystick = raw
+    for q in list(_joystick_queues):
+        try:
+            q.put_nowait(raw)
+        except asyncio.QueueFull:
+            pass
 
     jc = _load_joystick_config(profile_id)
     deadzone = int(jc.get("deadzone", 30))
