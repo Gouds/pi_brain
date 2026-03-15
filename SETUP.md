@@ -69,6 +69,20 @@ sudo apt update
 sudo apt install -y python3-pip python3-venv python3-dev libsdl2-mixer-2.0-0
 ```
 
+### 1b. Install arduino-cli (for in-app Arduino flashing)
+
+```bash
+# Download and install arduino-cli
+curl -fsSL https://raw.githubusercontent.com/arduino/arduino-cli/master/install.sh | sh
+# Move to a directory on PATH
+sudo mv ~/bin/arduino-cli /usr/local/bin/
+
+# Install the AVR core (needed to compile for Arduino Uno)
+arduino-cli core install arduino:avr
+```
+
+This is a one-time setup. After this, use **Admin → Controller Config → Compile & Flash** to update the Arduino without the IDE.
+
 ### 2. Clone the project
 
 ```bash

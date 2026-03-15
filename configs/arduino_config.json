@@ -1,0 +1,18 @@
+{
+    "port": "/dev/ttyUSB0",
+    "baud": 9600,
+    "pins": {
+        "left_x":  "A0",
+        "left_y":  "A1",
+        "right_x": "A2",
+        "right_y": "A3",
+        "btn1":    "2",
+        "btn2":    "3",
+        "btn3":    "4",
+        "estop":   "5"
+    },
+    "deadzone": 30,
+    "change_threshold": 8,
+    "keepalive_ms": 500,
+    "sample_ms": 50
+}

@@ -248,6 +248,19 @@ export const profileServoClose = (servoName, pid = _profileId) =>
 export const profileServoMove = (servoName, angle, pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/servo/${encodeURIComponent(servoName)}/move/${angle}`).then(r => r.json())
 
+// ── Arduino Flash ─────────────────────────────────────────────────────────────
+export const arduinoGetConfig = () =>
+  fetch(`${_apiUrl}/admin/arduino/config`).then(r => r.json())
+
+export const arduinoSaveConfig = (config) =>
+  fetch(`${_apiUrl}/admin/arduino/config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  }).then(r => r.json())
+
+export const arduinoFlashUrl = () => `${_apiUrl}/admin/arduino/flash`
+
 // ── Profile Joystick Config ───────────────────────────────────────────────────
 export const profileGetJoystickConfig = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/joystick`).then(r => r.json())
