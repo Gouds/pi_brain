@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ProfileContext } from '../../context/ProfileContext.js'
 import {
@@ -7,6 +7,7 @@ import {
   profileAdminGetServos,
   profileGetAudioCategories,
   profileGetScriptList,
+  getApiUrl,
 } from '../../api/client.js'
 
 const AXIS_TYPES = [
@@ -117,11 +118,14 @@ export default function ControllerConfig() {
   const { activeProfile } = useContext(ProfileContext)
   const navigate = useNavigate()
 
-  const [config, setConfig] = useState(null)
-  const [servos, setServos] = useState([])
+  const [config, setConfig]     = useState(null)
+  const [servos, setServos]     = useState([])
   const [categories, setCategories] = useState([])
-  const [scripts, setScripts] = useState([])
-  const [status, setStatus] = useState(null)
+  const [scripts, setScripts]   = useState([])
+  const [status, setStatus]     = useState(null)
+  const [monitor, setMonitor]   = useState(false)
+  const [joy, setJoy]           = useState(null)
+  const esRef                   = useRef(null)
 
   useEffect(() => {
     if (!activeProfile?.id) return
@@ -138,6 +142,17 @@ export default function ControllerConfig() {
       setScripts(Array.isArray(scr) ? scr.map(s => s.replace(/\.scr$/, '')) : [])
     })
   }, [activeProfile?.id])
+
+  useEffect(() => {
+    if (monitor) {
+      const es = new EventSource(`${getApiUrl()}/joystick/stream`)
+      esRef.current = es
+      es.onmessage = e => { try { setJoy(JSON.parse(e.data)) } catch {} }
+      return () => es.close()
+    } else {
+      esRef.current?.close()
+    }
+  }, [monitor])
 
   function setAxis(key, action) {
     setConfig(c => ({ ...c, axes: { ...c.axes, [key]: action } }))
@@ -193,9 +208,54 @@ export default function ControllerConfig() {
         <button onClick={() => navigate('/admin')} style={{ ...sel, cursor: 'pointer', padding: '5px 10px' }}>← Admin</button>
         <h2 style={{ margin: 0, fontSize: '1.1rem' }}>Controller Config</h2>
         <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Profile: {activeProfile?.label}</span>
-        <button onClick={save} style={{ marginLeft: 'auto', padding: '6px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
+        <button
+          onClick={() => setMonitor(m => !m)}
+          style={{ marginLeft: 'auto', padding: '6px 14px', background: monitor ? 'var(--success)' : 'var(--bg-surface)', color: monitor ? '#fff' : 'var(--text-secondary)', border: '1px solid var(--border)', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}
+        >{monitor ? '● Live' : 'Monitor'}</button>
+        <button onClick={save} style={{ padding: '6px 18px', background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 600 }}>Save</button>
         {status && <span style={{ color: status === 'Saved!' ? 'var(--success)' : 'var(--danger)', fontSize: '0.85rem' }}>{status}</span>}
       </div>
+
+      {/* Live monitor */}
+      {monitor && (
+        <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '10px 12px', marginBottom: '12px' }}>
+          <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '8px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Live Joystick Values {!joy && '— waiting for data…'}
+          </div>
+          {joy && (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px' }}>
+              {[
+                { label: 'Left X',     k: 'lx', axis: 'left_x' },
+                { label: 'Left Y',     k: 'ly', axis: 'left_y' },
+                { label: 'Left Twist', k: 'lt', axis: 'left_twist' },
+                { label: 'Right X',    k: 'rx', axis: 'right_x' },
+                { label: 'Right Y',    k: 'ry', axis: 'right_y' },
+                { label: 'Right Twist',k: 'rt', axis: 'right_twist' },
+              ].map(({ label, k, axis }) => {
+                const val      = joy[k] ?? 512
+                const pct      = Math.round((val / 1023) * 100)
+                const deadzone = config?.deadzone ?? 30
+                const active   = Math.abs(val - 512) > deadzone
+                return (
+                  <div key={k}>
+                    <div style={{ fontSize: '0.72rem', color: active ? 'var(--accent)' : 'var(--text-muted)', fontWeight: active ? 700 : 400, marginBottom: '2px' }}>
+                      {label} <span style={{ float: 'right' }}>{val}</span>
+                    </div>
+                    <div style={{ height: '8px', background: 'var(--bg-hover)', borderRadius: '4px', overflow: 'hidden' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: active ? 'var(--accent)' : 'var(--border)', transition: 'width 0.05s' }} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
+          {joy && (
+            <div style={{ marginTop: '8px', fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              BTN: {joy.btn} &nbsp;|&nbsp; E-Stop: {joy.estop}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Deadzone */}
       <div style={rowStyle}>
