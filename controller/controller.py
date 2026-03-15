@@ -77,6 +77,7 @@ def launch_kiosk():
         '--noerrdialogs',
         '--disable-infobars',
         '--disable-session-crashed-bubble',
+        '--disable-features=StatusBubble',
         kiosk_url,
     ]
     print(f'[controller] Launching kiosk: {" ".join(cmd)}')
