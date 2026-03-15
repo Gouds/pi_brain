@@ -19,8 +19,10 @@ import time
 import requests
 import serial
 
-# Lock file written by server.py during a flash — signals us to release the port
-FLASH_LOCK = '/tmp/pi_brain_flash.lock'
+# server.py creates FLASH_LOCK to request port release
+# controller.py creates FLASH_READY to confirm the port is closed
+FLASH_LOCK  = '/tmp/pi_brain_flash.lock'
+FLASH_READY = '/tmp/pi_brain_flash_ready.lock'
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
@@ -110,7 +112,7 @@ def read_joystick_loop():
                 while True:
                     # Flash started — break inner loop so serial port is closed
                     if os.path.exists(FLASH_LOCK):
-                        print('[controller] Flash started — releasing serial port')
+                        print('[controller] Flash requested — releasing serial port')
                         break
                     line = ser.readline().decode('utf-8', errors='ignore').strip()
                     if line:
@@ -122,13 +124,21 @@ def read_joystick_loop():
         except Exception as e:
             print(f'[controller] Unexpected error: {e} — retrying in 3s')
             time.sleep(3)
+        finally:
+            # Port is now closed — signal server.py that it can proceed with flash
+            if os.path.exists(FLASH_LOCK):
+                print('[controller] Port closed — signalling flash ready')
+                open(FLASH_READY, 'w').close()
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
-    # Clean up any stale lock file from a previous crashed flash
-    if os.path.exists(FLASH_LOCK):
-        os.remove(FLASH_LOCK)
+    # Clean up any stale lock files from a previous crashed flash
+    for f in (FLASH_LOCK, FLASH_READY):
+        try:
+            os.remove(f)
+        except FileNotFoundError:
+            pass
 
     wait_for_backend()
     launch_kiosk()

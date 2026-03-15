@@ -35,8 +35,9 @@ ARDUINO_CONFIG_PATH   = os.path.join("configs", "arduino_config.json")
 ARDUINO_TEMPLATE_PATH = os.path.join("arduino", "arduino.ino.template")
 ARDUINO_SKETCH_PATH   = os.path.join("arduino", "arduino.ino")
 
-# Shared lock file — controller.py watches this and releases the serial port
-FLASH_LOCK = "/tmp/pi_brain_flash.lock"
+# controller.py watches FLASH_LOCK and creates FLASH_READY once port is closed
+FLASH_LOCK  = "/tmp/pi_brain_flash.lock"
+FLASH_READY = "/tmp/pi_brain_flash_ready.lock"
 
 DEFAULT_CONFIG = {
     "port": "/dev/ttyUSB0",
@@ -141,20 +142,25 @@ async def flash():
     ]
 
     async def stream():
-        # Signal controller.py to release the serial port
+        # Clean up any stale ready flag from a previous run
+        try:
+            os.remove(FLASH_READY)
+        except FileNotFoundError:
+            pass
+
+        # Signal controller.py to close the serial port
         open(FLASH_LOCK, 'w').close()
         yield "data: Waiting for serial port to be released…\n\n"
 
-        # Poll until the port is actually free (up to 10s)
-        deadline = asyncio.get_event_loop().time() + 10
+        # Wait for controller.py to confirm it has closed the port (up to 15s)
+        deadline = asyncio.get_event_loop().time() + 15
         while asyncio.get_event_loop().time() < deadline:
-            try:
-                with serial.Serial(port, timeout=0.2):
-                    break  # opened successfully — port is free
-            except Exception:
-                await asyncio.sleep(0.5)
+            if os.path.exists(FLASH_READY):
+                yield "data: Serial port released — starting flash\n\n"
+                break
+            await asyncio.sleep(0.3)
         else:
-            yield "data: WARNING: port may still be in use — attempting flash anyway\n\n"
+            yield "data: WARNING: controller did not confirm port release — attempting flash anyway\n\n"
 
         yield f"data: Running: {' '.join(cmd)}\n\n"
         try:
@@ -172,10 +178,11 @@ async def flash():
             else:
                 yield f"event: done\ndata: error (exit {proc.returncode})\n\n"
         finally:
-            # Always release the lock so controller.py can reopen the port
-            try:
-                os.remove(FLASH_LOCK)
-            except FileNotFoundError:
-                pass
+            # Remove both lock files so controller.py can reopen the port
+            for f in (FLASH_LOCK, FLASH_READY):
+                try:
+                    os.remove(f)
+                except FileNotFoundError:
+                    pass
 
     return StreamingResponse(stream(), media_type="text/event-stream")
