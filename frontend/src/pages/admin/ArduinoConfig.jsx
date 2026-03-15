@@ -150,7 +150,7 @@ function CalibrationWizard({ config, onDone, onCancel }) {
                   width: '40px', fontSize: '0.75rem', color: isTop ? 'var(--accent)' : 'var(--text-muted)',
                   fontWeight: isTop ? 700 : 400,
                 }}>
-                  Ch {i}
+                  {config.pins?.[SLOT_ORDER[i]] ?? `A${i}`}
                 </span>
                 <div style={{ flex: 1, height: '10px', background: 'var(--bg-hover)', borderRadius: '4px', overflow: 'hidden' }}>
                   <div style={{
