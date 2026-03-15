@@ -34,6 +34,9 @@ ARDUINO_CONFIG_PATH   = os.path.join("configs", "arduino_config.json")
 ARDUINO_TEMPLATE_PATH = os.path.join("arduino", "arduino.ino.template")
 ARDUINO_SKETCH_PATH   = os.path.join("arduino", "arduino.ino")
 
+# Shared lock file — controller.py watches this and releases the serial port
+FLASH_LOCK = "/tmp/pi_brain_flash.lock"
+
 DEFAULT_CONFIG = {
     "port": "/dev/ttyUSB0",
     "baud": 9600,
@@ -137,19 +140,31 @@ async def flash():
     ]
 
     async def stream():
+        # Signal controller.py to release the serial port
+        open(FLASH_LOCK, 'w').close()
+        yield "data: Waiting for serial port to be released…\n\n"
+        await asyncio.sleep(2)
+
         yield f"data: Running: {' '.join(cmd)}\n\n"
-        proc = await asyncio.create_subprocess_exec(
-            *cmd,
-            stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.STDOUT,
-        )
-        async for line in proc.stdout:
-            text = line.decode("utf-8", errors="ignore").rstrip()
-            yield f"data: {text}\n\n"
-        await proc.wait()
-        if proc.returncode == 0:
-            yield "event: done\ndata: success\n\n"
-        else:
-            yield f"event: done\ndata: error (exit {proc.returncode})\n\n"
+        try:
+            proc = await asyncio.create_subprocess_exec(
+                *cmd,
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+            async for line in proc.stdout:
+                text = line.decode("utf-8", errors="ignore").rstrip()
+                yield f"data: {text}\n\n"
+            await proc.wait()
+            if proc.returncode == 0:
+                yield "event: done\ndata: success\n\n"
+            else:
+                yield f"event: done\ndata: error (exit {proc.returncode})\n\n"
+        finally:
+            # Always release the lock so controller.py can reopen the port
+            try:
+                os.remove(FLASH_LOCK)
+            except FileNotFoundError:
+                pass
 
     return StreamingResponse(stream(), media_type="text/event-stream")

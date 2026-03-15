@@ -19,6 +19,9 @@ import time
 import requests
 import serial
 
+# Lock file written by server.py during a flash — signals us to release the port
+FLASH_LOCK = '/tmp/pi_brain_flash.lock'
+
 # ── Config ────────────────────────────────────────────────────────────────────
 
 def _load_env_url():
@@ -42,7 +45,6 @@ args = parser.parse_args()
 BACKEND_URL = (args.url or _load_env_url() or 'http://localhost:8000').rstrip('/')
 SERIAL_PORT = args.port
 BAUD_RATE   = args.baud
-POLL_MS     = 50   # How often to process serial data (milliseconds)
 
 print(f'[controller] Backend: {BACKEND_URL}')
 print(f'[controller] Serial:  {SERIAL_PORT} @ {BAUD_RATE} baud')
@@ -66,8 +68,6 @@ def wait_for_backend(timeout=60):
 
 def launch_kiosk():
     """Open Chromium in kiosk mode pointing at the backend-served frontend."""
-    frontend_url = BACKEND_URL.replace(':8000', '')  # served on same host, port 80 or direct
-    # The frontend is served by FastAPI at / — use the same host, port 8000
     kiosk_url = f'{BACKEND_URL}/'
     cmd = [
         'chromium-browser',
@@ -85,8 +85,7 @@ def launch_kiosk():
 def send_command(raw_line: str):
     """
     Translate a serial line from the Arduino and POST it to the backend.
-    Expected format: "LX LY RX RY BTN ESTOP"  (space-separated, 6 integers)
-    The backend endpoint expects: POST /joystick/LX-LY-RX-RY-BTN-ESTOP
+    Format: "LX LY LT RX RY RT BTN ESTOP" → POST /joystick/LX-LY-LT-RX-RY-RT-BTN-ESTOP
     """
     command = raw_line.replace(' ', '-')
     try:
@@ -95,16 +94,28 @@ def send_command(raw_line: str):
         print(f'[controller] Send error: {e}')
 
 def read_joystick_loop():
-    """Continuously read from the Arduino serial port and forward commands."""
+    """Continuously read from the Arduino serial port and forward commands.
+    Automatically releases the port when a flash is in progress."""
     while True:
+        # Wait if a flash is in progress before trying to open the port
+        if os.path.exists(FLASH_LOCK):
+            print('[controller] Flash in progress — waiting for port to be free…')
+            time.sleep(1)
+            continue
+
         try:
             print(f'[controller] Opening serial port {SERIAL_PORT}…')
             with serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1) as ser:
                 print('[controller] Serial port open')
                 while True:
+                    # Flash started — break inner loop so serial port is closed
+                    if os.path.exists(FLASH_LOCK):
+                        print('[controller] Flash started — releasing serial port')
+                        break
                     line = ser.readline().decode('utf-8', errors='ignore').strip()
                     if line:
                         send_command(line)
+
         except serial.SerialException as e:
             print(f'[controller] Serial error: {e} — retrying in 3s')
             time.sleep(3)
@@ -115,6 +126,10 @@ def read_joystick_loop():
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 if __name__ == '__main__':
+    # Clean up any stale lock file from a previous crashed flash
+    if os.path.exists(FLASH_LOCK):
+        os.remove(FLASH_LOCK)
+
     wait_for_backend()
     launch_kiosk()
 
