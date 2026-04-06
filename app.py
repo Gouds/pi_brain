@@ -14,6 +14,7 @@ from plugins.dome.dome_control import dome_list
 from plugins.body.body_control import body_list
 from plugins.servo.servo_control import i2c_servo_controls, reinit_bus, remove_bus
 from plugins.script.script_control import script_list, script_start_handler, running_scripts, stop_script, stop_all_scripts
+from plugins.lights.lights_control import load_config as _load_lights_config, save_config as _save_lights_config, send_command as _lights_send, build_logic_command, build_holo_command
 #import board
 #import busio
 #from adafruit_servokit import ServoKit
@@ -1649,6 +1650,52 @@ async def arduino_flash():
             yield f"event: done\ndata: error (exit {proc.returncode})\n\n"
 
     return StreamingResponse(stream(), media_type="text/event-stream")
+
+# ── Lights (AstroPixels) ──────────────────────────────────────────────────────
+
+class LightsConfig(BaseModel):
+    port: str = '/dev/ttyUSB1'
+    baud: int = 9600
+    enabled: bool = True
+
+class LogicCommand(BaseModel):
+    target: str = '0'    # 0=all,1=front,3=rear,4=fpsi,5=rpsi
+    effect: int = 0      # 0=normal … 99=random
+    colour: int = 0      # 0=default … 9=pink
+    speed: int = 0       # 0 fastest – 9 slowest
+    duration: int = 0    # seconds, 0=continuous
+
+class HoloCommand(BaseModel):
+    target: str = 'A'    # A=all,F=front,R=rear,T=top,X=F+R,Y=F+T,Z=R+T
+    sequence: int = 1    # 1=leia,2=flicker,3=pulse,4=cycle,5=colour,6=rainbow,7=short circuit
+    colour: int = 0      # 0=random … 9=white
+    duration: int = 0    # seconds, 0=continuous
+
+class RawLightsCommand(BaseModel):
+    command: str
+
+@app.get("/lights/config", tags=["Lights"])
+async def lights_get_config():
+    return _load_lights_config()
+
+@app.put("/lights/config", tags=["Lights"])
+async def lights_save_config(config: LightsConfig):
+    _save_lights_config(config.dict())
+    return {"ok": True}
+
+@app.post("/lights/logic", tags=["Lights"])
+async def lights_logic(cmd: LogicCommand):
+    command = build_logic_command(cmd.target, cmd.effect, cmd.colour, cmd.speed, cmd.duration)
+    return _lights_send(command)
+
+@app.post("/lights/holo", tags=["Lights"])
+async def lights_holo(cmd: HoloCommand):
+    command = build_holo_command(cmd.target, cmd.sequence, cmd.colour, cmd.duration)
+    return _lights_send(command)
+
+@app.post("/lights/command", tags=["Lights"])
+async def lights_raw(cmd: RawLightsCommand):
+    return _lights_send(cmd.command)
 
 # Serve the built React frontend — must be last so it doesn't shadow API routes
 _dist = os.path.join(os.path.dirname(__file__), "frontend", "dist")

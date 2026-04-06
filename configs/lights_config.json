@@ -1,0 +1,5 @@
+{
+  "port": "/dev/ttyUSB1",
+  "baud": 9600,
+  "enabled": true
+}

@@ -7,6 +7,7 @@ const TOP_LINKS = [
   { to: '/dome',   label: 'Dome Control', feature: 'dome' },
   { to: '/body',   label: 'Body Control', feature: 'body' },
   { to: '/audio',  label: 'Audio',        feature: 'audio' },
+  { to: '/lights', label: 'Lights',       feature: 'lights' },
 ]
 
 const BOTTOM_LINKS = [

@@ -285,3 +285,35 @@ export const profileUploadImage = (file, pid = _profileId) => {
 
 export const profileDeleteImage = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/image`, { method: 'DELETE' }).then(r => r.json())
+
+// ── Lights (AstroPixels) ─────────────────────────────────────────────────────
+export const lightsGetConfig = () =>
+  fetch(`${_apiUrl}/lights/config`).then(r => r.json())
+
+export const lightsSaveConfig = (config) =>
+  fetch(`${_apiUrl}/lights/config`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(config),
+  }).then(r => r.json())
+
+export const lightsLogic = (params) =>
+  fetch(`${_apiUrl}/lights/logic`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  }).then(r => r.json())
+
+export const lightsHolo = (params) =>
+  fetch(`${_apiUrl}/lights/holo`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  }).then(r => r.json())
+
+export const lightsCommand = (command) =>
+  fetch(`${_apiUrl}/lights/command`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ command }),
+  }).then(r => r.json())

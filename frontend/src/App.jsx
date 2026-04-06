@@ -25,6 +25,7 @@ import ArduinoConfig from './pages/admin/ArduinoConfig.jsx'
 import AudioLibrary from './pages/AudioLibrary.jsx'
 import Simulation from './pages/Simulation.jsx'
 import ScriptEditor from './pages/ScriptEditor.jsx'
+import Lights from './pages/Lights.jsx'
 
 import { ProfileContext } from './context/ProfileContext.js'
 import { useProfile } from './hooks/useProfile.js'
@@ -75,6 +76,7 @@ export default function App() {
                 <Route path="/audio-library" element={<AudioLibrary />} />
                 <Route path="/simulation" element={<Simulation />} />
                 <Route path="/script-editor" element={<ScriptEditor />} />
+                <Route path="/lights" element={<Lights />} />
               </Routes>
             </div>
             {!isTouch && <SideMenu side="right" visible={menuState === 'right'} />}

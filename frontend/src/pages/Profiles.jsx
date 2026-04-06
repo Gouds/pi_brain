@@ -12,7 +12,7 @@ const REQUIRED_COLOR_KEYS = [
   '--btn-primary', '--btn-primary-text',
 ]
 
-const ALL_FEATURES = ['home', 'dome', 'body', 'audio', 'scripts']
+const ALL_FEATURES = ['home', 'dome', 'body', 'audio', 'scripts', 'lights']
 
 const EMPTY_FORM = {
   id: '',

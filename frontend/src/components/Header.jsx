@@ -162,6 +162,7 @@ const PAGE_TITLES = {
   '/audio-library': 'Audio Library',
   '/simulation': 'Simulation',
   '/script-editor': 'Script Editor',
+  '/lights': 'Lights',
 }
 
 export default function Header({ onMenuToggle, onVolumeOpen }) {
