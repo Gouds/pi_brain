@@ -286,6 +286,30 @@ export const profileUploadImage = (file, pid = _profileId) => {
 export const profileDeleteImage = (pid = _profileId) =>
   fetch(`${_apiUrl}/profiles/${pid}/image`, { method: 'DELETE' }).then(r => r.json())
 
+// ── Sections ──────────────────────────────────────────────────────────────────
+export const getSections = () =>
+  fetch(`${_apiUrl}/sections`).then(r => r.json())
+
+export const adminGetSections = () =>
+  fetch(`${_apiUrl}/admin/sections`).then(r => r.json())
+
+export const adminAddSection = (section) =>
+  fetch(`${_apiUrl}/admin/sections`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(section),
+  }).then(r => r.json())
+
+export const adminUpdateSection = (index, section) =>
+  fetch(`${_apiUrl}/admin/sections/${index}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(section),
+  }).then(r => r.json())
+
+export const adminDeleteSection = (index) =>
+  fetch(`${_apiUrl}/admin/sections/${index}`, { method: 'DELETE' }).then(r => r.json())
+
 // ── Lights (AstroPixels) ─────────────────────────────────────────────────────
 export const lightsGetConfig = () =>
   fetch(`${_apiUrl}/lights/config`).then(r => r.json())

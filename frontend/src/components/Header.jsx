@@ -2,6 +2,7 @@ import { useContext, useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { ProfileContext } from '../context/ProfileContext.js'
 import { useRecording } from '../context/RecordingContext.jsx'
+import { useSections } from '../hooks/useSections.js'
 
 function ExpandIcon() {
   return (
@@ -147,8 +148,6 @@ function ProfileSwitcher() {
 
 const PAGE_TITLES = {
   '/': 'Home',
-  '/dome': 'Dome Control',
-  '/body': 'Body Control',
   '/audio': 'Audio',
   '/scripts': 'Scripts',
   '/settings': 'Settings',
@@ -156,6 +155,7 @@ const PAGE_TITLES = {
   '/shutdown': 'Shutdown',
   '/profiles': 'Profiles',
   '/admin': 'Admin',
+  '/admin/sections': 'Edit Sections',
   '/admin/servos': 'Edit Servos',
   '/admin/buses': 'Edit Buses',
   '/admin/connection': 'Connection',
@@ -170,7 +170,16 @@ export default function Header({ onMenuToggle, onVolumeOpen }) {
   const navigate = useNavigate()
   const { activeProfile, wideMode, toggleWideMode } = useContext(ProfileContext)
   const { isRecording, stop } = useRecording()
-  const page = PAGE_TITLES[location.pathname] ?? 'Pi Brain'
+  const sections = useSections()
+
+  // Resolve /section/:id titles from loaded sections
+  const sectionMatch = location.pathname.match(/^\/section\/(.+)$/)
+  let page = PAGE_TITLES[location.pathname]
+  if (!page && sectionMatch) {
+    const sec = sections.find(s => s.id === sectionMatch[1])
+    page = sec ? sec.label : sectionMatch[1]
+  }
+  page = page ?? 'Pi Brain'
   const robotName = activeProfile?.robot?.name
   const prefix = robotName && robotName !== 'My Robot' ? robotName : 'Pi Brain'
   const title = `${prefix} — ${page}`

@@ -1,6 +1,7 @@
 import { useContext } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useSections } from '../hooks/useSections.js'
 
 /* ---- Inline SVG icons ---- */
 
@@ -75,6 +76,17 @@ function LightsIcon() {
   )
 }
 
+function SectionIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="4" y="8" width="16" height="12" rx="1"/>
+      <path d="M8 8V6a4 4 0 0 1 8 0v2"/>
+      <line x1="12" y1="13" x2="12" y2="16"/>
+    </svg>
+  )
+}
+
 function SettingsIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -85,26 +97,34 @@ function SettingsIcon() {
   )
 }
 
-/* ---- Nav items ---- */
-
-const NAV_ITEMS = [
-  { to: '/',         label: 'Home',     Icon: HomeIcon,     feature: 'home' },
-  { to: '/dome',     label: 'Dome',     Icon: DomeIcon,     feature: 'dome' },
-  { to: '/body',     label: 'Body',     Icon: BodyIcon,     feature: 'body' },
-  { to: '/audio',    label: 'Audio',    Icon: AudioIcon,    feature: 'audio' },
-  { to: '/scripts',  label: 'Scripts',  Icon: ScriptsIcon,  feature: 'scripts' },
-  { to: '/lights',   label: 'Lights',   Icon: LightsIcon,   feature: 'lights' },
-  { to: '/settings', label: 'Settings', Icon: SettingsIcon },
-]
+// Well-known section icons
+const SECTION_ICONS = { dome: DomeIcon, body: BodyIcon }
 
 // Routes that should highlight the Settings tab
 const SETTINGS_ROUTES = ['/settings', '/admin', '/debug', '/shutdown', '/profiles']
 
+const STATIC_ITEMS = [
+  { to: '/',        label: 'Home',    Icon: HomeIcon,    feature: 'home' },
+  // sections injected here dynamically
+  { to: '/audio',   label: 'Audio',   Icon: AudioIcon,   feature: 'audio' },
+  { to: '/scripts', label: 'Scripts', Icon: ScriptsIcon, feature: 'scripts' },
+  { to: '/lights',  label: 'Lights',  Icon: LightsIcon,  feature: 'lights' },
+  { to: '/settings',label: 'Settings',Icon: SettingsIcon },
+]
+
 export default function BottomNav() {
   const location = useLocation()
   const { activeProfile } = useContext(ProfileContext)
+  const sections = useSections()
   const features = activeProfile?.robot?.features ?? []
 
+  const sectionItems = sections.map(s => ({
+    to: `/section/${s.id}`,
+    label: s.label,
+    Icon: SECTION_ICONS[s.id] ?? SectionIcon,
+  }))
+
+  const NAV_ITEMS = [STATIC_ITEMS[0], ...sectionItems, ...STATIC_ITEMS.slice(1)]
   const visibleItems = NAV_ITEMS.filter(item => !item.feature || features.includes(item.feature))
 
   function isActive(to) {

@@ -1,13 +1,12 @@
 import { useContext } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { ProfileContext } from '../context/ProfileContext.js'
+import { useSections } from '../hooks/useSections.js'
 
-const TOP_LINKS = [
-  { to: '/',       label: 'Home',         feature: 'home' },
-  { to: '/dome',   label: 'Dome Control', feature: 'dome' },
-  { to: '/body',   label: 'Body Control', feature: 'body' },
-  { to: '/audio',  label: 'Audio',        feature: 'audio' },
-  { to: '/lights', label: 'Lights',       feature: 'lights' },
+const STATIC_TOP = [
+  { to: '/',       label: 'Home',  feature: 'home' },
+  { to: '/audio',  label: 'Audio', feature: 'audio' },
+  { to: '/lights', label: 'Lights', feature: 'lights' },
 ]
 
 const BOTTOM_LINKS = [
@@ -19,7 +18,9 @@ const BOTTOM_LINKS = [
 ]
 
 function NavLink({ to, label, location }) {
-  const isActive = location.pathname === to
+  const isActive = to === '/'
+    ? location.pathname === '/'
+    : location.pathname === to || location.pathname.startsWith(to + '/')
   return (
     <li>
       <Link to={to} className={isActive ? 'active' : ''}>
@@ -32,8 +33,12 @@ function NavLink({ to, label, location }) {
 export default function SideMenu({ side, visible }) {
   const location = useLocation()
   const { activeProfile } = useContext(ProfileContext)
+  const sections = useSections()
   const features = activeProfile?.robot?.features ?? []
   const cls = `sidemenu ${side === 'right' ? 'right' : ''} ${visible ? '' : 'hidden'}`
+
+  const sectionLinks = sections.map(s => ({ to: `/section/${s.id}`, label: s.label }))
+  const TOP_LINKS = [STATIC_TOP[0], ...sectionLinks, ...STATIC_TOP.slice(1)]
 
   const visibleTop = TOP_LINKS.filter(l => !l.feature || features.includes(l.feature))
   const visibleBottom = BOTTOM_LINKS.filter(l => !l.feature || features.includes(l.feature))

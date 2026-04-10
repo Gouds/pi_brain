@@ -5,15 +5,17 @@ import {
   profileAdminUpdateServo as adminUpdateServo,
   profileAdminDeleteServo as adminDeleteServo,
   profileAdminGetBuses    as adminGetBuses,
+  adminGetSections,
 } from '../../api/client.js'
 import { ProfileContext } from '../../context/ProfileContext.js'
 
-const BLANK = { id: 0, name: '', bus: '', group: '', default_position: 0, open_position: 0, close_position: 0, position: 0, speed: 100 }
+const BLANK = { id: 0, name: '', bus: '', section: '', group: '', default_position: 0, open_position: 0, close_position: 0, position: 0, speed: 100 }
 
 export default function EditServos() {
   const { activeProfile } = useContext(ProfileContext)
   const [servos, setServos] = useState([])
   const [buses, setBuses] = useState([])
+  const [sections, setSections] = useState([])
   const [form, setForm] = useState(BLANK)
   const [editIndex, setEditIndex] = useState(null)
 
@@ -25,6 +27,9 @@ export default function EditServos() {
     }).catch(() => {})
     adminGetBuses().then(data => {
       setBuses(Array.isArray(data) ? data : [])
+    }).catch(() => {})
+    adminGetSections().then(data => {
+      setSections(Array.isArray(data) ? data : [])
     }).catch(() => {})
   }
 
@@ -61,7 +66,7 @@ export default function EditServos() {
   }
 
   const numFields = ['id', 'default_position', 'open_position', 'close_position', 'position', 'speed']
-  const rowFields = ['id', 'name', 'bus', 'group', 'default_position', 'open_position', 'close_position', 'position', 'speed']
+  const rowFields = ['id', 'name', 'bus', 'section', 'group', 'default_position', 'open_position', 'close_position', 'position', 'speed']
 
   // Unique groups already used — for quick-fill datalist
   const existingGroups = [...new Set(servos.map(s => s.group).filter(Boolean))]
@@ -76,6 +81,11 @@ export default function EditServos() {
             <select key={k} name={k} value={form[k]} onChange={handleFormChange}>
               <option value="">— bus —</option>
               {buses.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}
+            </select>
+          ) : k === 'section' ? (
+            <select key={k} name={k} value={form[k]} onChange={handleFormChange}>
+              <option value="">— section —</option>
+              {sections.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           ) : k === 'group' ? (
             <span key={k}>
@@ -107,7 +117,7 @@ export default function EditServos() {
       <table className="admin-table">
         <thead>
           <tr>
-            <th>ID</th><th>Name</th><th>Bus</th><th>Group</th><th>Default</th><th>Open</th><th>Close</th><th>Pos</th><th>Speed</th><th></th>
+            <th>ID</th><th>Name</th><th>Bus</th><th>Section</th><th>Group</th><th>Default</th><th>Open</th><th>Close</th><th>Pos</th><th>Speed</th><th></th>
           </tr>
         </thead>
         <tbody>
@@ -119,6 +129,11 @@ export default function EditServos() {
                     <select value={s[f] ?? ''} onChange={e => handleEditChange(i, f, e.target.value)}>
                       <option value="">—</option>
                       {buses.map(b => <option key={b.name} value={b.name}>{b.name}</option>)}
+                    </select>
+                  ) : f === 'section' ? (
+                    <select value={s[f] ?? ''} onChange={e => handleEditChange(i, f, e.target.value)}>
+                      <option value="">— (use bus) —</option>
+                      {sections.map(sec => <option key={sec.id} value={sec.id}>{sec.label}</option>)}
                     </select>
                   ) : f === 'group' ? (
                     <span>

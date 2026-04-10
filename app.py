@@ -122,7 +122,12 @@ class ServoConfig(BaseModel):
     close_position: int
     position: int = 0
     speed: int = 100  # 1 (slow) – 100 (instant)
-    group: str = ''   # logical grouping shown as a tab on the Dome/Body pages
+    group: str = ''   # logical grouping shown as a tab within a section
+    section: str = '' # which control section this servo belongs to (falls back to bus if empty)
+
+class SectionConfig(BaseModel):
+    id: str   # URL-safe slug e.g. "dome", "head"
+    label: str  # display name e.g. "Dome Control"
 
 class BusConfig(BaseModel):
     name: str
@@ -937,6 +942,53 @@ async def admin_delete_bus(index: int):
     config["i2c_buses"].pop(index)
     _save_servo_config(config)
     return config["i2c_buses"]
+
+# ── Sections ──────────────────────────────────────────────────────────────────
+
+_SECTIONS_PATH = os.path.join(os.path.dirname(__file__), "configs", "sections.json")
+
+def _load_sections():
+    if os.path.exists(_SECTIONS_PATH):
+        with open(_SECTIONS_PATH) as f:
+            return json.load(f)
+    return [{"id": "dome", "label": "Dome Control"}, {"id": "body", "label": "Body Control"}]
+
+def _save_sections(sections):
+    with open(_SECTIONS_PATH, "w") as f:
+        json.dump(sections, f, indent=4)
+
+@app.get("/sections", tags=["Sections"])
+async def get_sections():
+    return _load_sections()
+
+@app.get("/admin/sections", tags=["Admin"])
+async def admin_get_sections():
+    return _load_sections()
+
+@app.post("/admin/sections", tags=["Admin"])
+async def admin_add_section(section: SectionConfig):
+    sections = _load_sections()
+    sections.append(section.model_dump())
+    _save_sections(sections)
+    return sections
+
+@app.put("/admin/sections/{index}", tags=["Admin"])
+async def admin_update_section(index: int, section: SectionConfig):
+    sections = _load_sections()
+    if index < 0 or index >= len(sections):
+        raise HTTPException(status_code=404, detail="Section not found")
+    sections[index] = section.model_dump()
+    _save_sections(sections)
+    return sections
+
+@app.delete("/admin/sections/{index}", tags=["Admin"])
+async def admin_delete_section(index: int):
+    sections = _load_sections()
+    if index < 0 or index >= len(sections):
+        raise HTTPException(status_code=404, detail="Section not found")
+    sections.pop(index)
+    _save_sections(sections)
+    return sections
 
 
 #######################
