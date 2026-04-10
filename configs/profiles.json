@@ -5,6 +5,8 @@
         "layout": "touch",
         "builtin": false,
         "colors": {
+            "--btn-primary": "#2563eb",
+            "--btn-primary-text": "#ffffff",
             "--bg-primary": "#0c0c0c",
             "--bg-secondary": "#161616",
             "--bg-tertiary": "#111111",
@@ -18,13 +20,11 @@
             "--text-secondary": "#666666",
             "--text-muted": "#3a3a3a",
             "--success": "#22c55e",
-            "--danger": "#ef4444",
-            "--btn-primary": "#2563eb",
-            "--btn-primary-text": "#ffffff"
+            "--danger": "#ef4444"
         },
         "robot": {
             "name": "R2-D2",
-            "api_url": "http://localhost:8000",
+            "api_url": "http://192.168.4.44:8000",
             "features": [
                 "home",
                 "dome",
