@@ -68,10 +68,14 @@ export function useProfile() {
     document.querySelector('.wrapper')?.setAttribute('data-layout', layout)
     document.body.setAttribute('data-layout', layout)
 
-    // Update API URL and profile ID (fall back to auto-detected default)
-    // normalizeApiUrl ensures the URL has http:// — without it, fetch treats
-    // it as a relative path and requests end up at /192.168.x.x:8000/...
-    setApiUrl(normalizeApiUrl(activeProfile.robot.api_url) || DEFAULT_API_URL)
+    // Resolve the API URL to use for this profile.
+    // normalizeApiUrl ensures http:// is present.
+    // If the profile says localhost but the browser is accessing from a remote
+    // machine, fall back to the auto-detected URL (Pi's real IP) so remote
+    // access works without having to edit every profile's api_url.
+    const profileUrl = normalizeApiUrl(activeProfile.robot.api_url)
+    const isLocalhost = profileUrl && /^https?:\/\/localhost/.test(profileUrl)
+    setApiUrl(isLocalhost ? DEFAULT_API_URL : (profileUrl || DEFAULT_API_URL))
     setProfileId(activeProfile.id)
     activateProfileOnBackend(activeProfile.id)
 
