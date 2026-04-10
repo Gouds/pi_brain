@@ -5,7 +5,7 @@ import {
   adminUpdateSection,
   adminDeleteSection,
 } from '../../api/client.js'
-import { invalidateSections } from '../../hooks/useSections.js'
+import { refreshSections } from '../../hooks/useSections.js'
 
 const BLANK = { id: '', label: '' }
 
@@ -41,7 +41,7 @@ export default function EditSections() {
     e.preventDefault()
     if (!form.id || !form.label) return
     adminAddSection({ id: form.id, label: form.label })
-      .then(data => { setSections(data); setForm(BLANK); invalidateSections() })
+      .then(data => { setSections(data); setForm(BLANK); refreshSections() })
       .catch(() => {})
   }
 
@@ -53,14 +53,14 @@ export default function EditSections() {
   function handleSave(index) {
     const { id, label } = sections[index]
     adminUpdateSection(index, { id, label })
-      .then(data => { setSections(data); setEditIndex(null); invalidateSections() })
+      .then(data => { setSections(data); setEditIndex(null); refreshSections() })
       .catch(() => {})
   }
 
   function handleDelete(index) {
     if (!confirm(`Delete section "${sections[index].label}"? Servos assigned to it will fall back to their bus name.`)) return
     adminDeleteSection(index)
-      .then(data => { setSections(data); invalidateSections() })
+      .then(data => { setSections(data); refreshSections() })
       .catch(() => {})
   }
 

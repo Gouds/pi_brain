@@ -5,17 +5,17 @@ import {
   profileAdminUpdateServo as adminUpdateServo,
   profileAdminDeleteServo as adminDeleteServo,
   profileAdminGetBuses    as adminGetBuses,
-  adminGetSections,
 } from '../../api/client.js'
 import { ProfileContext } from '../../context/ProfileContext.js'
+import { useSections } from '../../hooks/useSections.js'
 
 const BLANK = { id: 0, name: '', bus: '', section: '', group: '', default_position: 0, open_position: 0, close_position: 0, position: 0, speed: 100 }
 
 export default function EditServos() {
   const { activeProfile } = useContext(ProfileContext)
+  const sections = useSections()
   const [servos, setServos] = useState([])
   const [buses, setBuses] = useState([])
-  const [sections, setSections] = useState([])
   const [form, setForm] = useState(BLANK)
   const [editIndex, setEditIndex] = useState(null)
 
@@ -27,9 +27,6 @@ export default function EditServos() {
     }).catch(() => {})
     adminGetBuses().then(data => {
       setBuses(Array.isArray(data) ? data : [])
-    }).catch(() => {})
-    adminGetSections().then(data => {
-      setSections(Array.isArray(data) ? data : [])
     }).catch(() => {})
   }
 
