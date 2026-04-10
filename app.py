@@ -870,7 +870,7 @@ async def shutdown_pi():
     return {"message": "Shutting down Raspberry Pi"}
 
 
-SERVO_CONFIG_PATH = "configs/servo_config.json"
+SERVO_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "configs", "servo_config.json")
 
 def _load_servo_config():
     with open(SERVO_CONFIG_PATH, "r") as f:
@@ -995,7 +995,7 @@ async def admin_delete_section(index: int):
 # PROFILES
 #######################
 
-PROFILES_CONFIG_PATH = "configs/profiles.json"
+PROFILES_CONFIG_PATH = os.path.join(os.path.dirname(__file__), "configs", "profiles.json")
 PROFILES_DIR = "profiles"
 
 def _profile_dir(profile_id):
