@@ -1,9 +1,15 @@
 const LS_KEY = 'pi-api-url'
 
+export function normalizeApiUrl(url) {
+  if (!url) return url
+  if (/^https?:\/\//.test(url)) return url
+  return `http://${url}`
+}
+
 function resolveDefaultApiUrl() {
   // 1. localStorage manual override
   const stored = localStorage.getItem(LS_KEY)
-  if (stored) return stored
+  if (stored) return normalizeApiUrl(stored)
 
   // 2. Auto-detect: same hostname the frontend was loaded from, port 8000
   if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {

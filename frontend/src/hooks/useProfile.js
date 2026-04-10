@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { BUILTIN_PROFILES } from '../profiles/builtins.js'
 import { getProfiles } from '../api/profiles.js'
 import { setApiUrl, setProfileId, activateProfileOnBackend } from '../api/client.js'
-import { DEFAULT_API_URL } from '../config.js'
+import { DEFAULT_API_URL, normalizeApiUrl } from '../config.js'
 
 export function useProfile() {
   const [userProfiles, setUserProfiles] = useState([])
@@ -69,7 +69,9 @@ export function useProfile() {
     document.body.setAttribute('data-layout', layout)
 
     // Update API URL and profile ID (fall back to auto-detected default)
-    setApiUrl(activeProfile.robot.api_url || DEFAULT_API_URL)
+    // normalizeApiUrl ensures the URL has http:// — without it, fetch treats
+    // it as a relative path and requests end up at /192.168.x.x:8000/...
+    setApiUrl(normalizeApiUrl(activeProfile.robot.api_url) || DEFAULT_API_URL)
     setProfileId(activeProfile.id)
     activateProfileOnBackend(activeProfile.id)
 

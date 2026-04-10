@@ -333,7 +333,12 @@ function RobotForm({ editingProfile, initialStyleId = 'dark', onSave, onCancel }
           </div>
           <div>
             <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.06em' }}>API URL</div>
-            <input value={form.api_url} onChange={e => setForm(f => ({ ...f, api_url: e.target.value }))} placeholder="http://localhost:8000" style={{ width: 200 }} />
+            <input value={form.api_url} onChange={e => setForm(f => ({ ...f, api_url: e.target.value }))} placeholder="http://192.168.x.x:8000" style={{ width: 200 }} />
+            {form.api_url && !/^https?:\/\//.test(form.api_url) && (
+              <div style={{ fontSize: 10, color: 'var(--danger)', marginTop: 2 }}>
+                Must start with http:// or https://
+              </div>
+            )}
           </div>
         </div>
 
