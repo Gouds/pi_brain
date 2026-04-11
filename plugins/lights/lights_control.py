@@ -74,7 +74,12 @@ def send_command(cmd: str) -> dict:
         return {'ok': True, 'mock': True, 'command': cmd}
     try:
         address = _config.get('i2c_address', 0x0A)
-        bus.write_bytes(address, cmd.encode('ascii'))
+        data = cmd.encode('ascii')
+        # write_i2c_block_data(addr, register, data) — first byte acts as the
+        # register/command byte; remaining bytes are the data payload.
+        # The AstroPixels I2CReceiver reads all bytes in the transaction the
+        # same way, so this sends the full ASCII command in one transaction.
+        bus.write_i2c_block_data(address, data[0], list(data[1:]))
         return {'ok': True, 'command': cmd}
     except Exception as e:
         print(f'[LIGHTS] I2C send error: {e}')
