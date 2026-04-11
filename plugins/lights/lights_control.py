@@ -1,28 +1,33 @@
 """
 AstroPixels lights control plugin.
 
-Communicates with an AstroPixels ESP32 board over serial (9600 baud).
-Falls back to mock (console print) when the serial port is unavailable.
+Communicates with an AstroPixels ESP32 board over I2C at address 0x0A.
+Commands are the same ASCII strings as serial — sent as raw bytes in a
+single I2C transaction using smbus2.write_bytes().
+
+Falls back to mock (console print) when smbus2 or the I2C bus is unavailable.
 
 Wiring:
-  Pi TX  →  ESP32 GPIO 16 (Serial2 RX)
-  Pi GND →  ESP32 GND
-  (no power line needed — ESP32 powered separately)
+  Pi GPIO 2 (SDA) → AstroPixels I2C header Data
+  Pi GPIO 3 (SCL) → AstroPixels I2C header Clock
+  Pi GND          → AstroPixels I2C header GND
+  (no power line — AstroPixels powered separately)
+  (can share the same I2C bus as the dome PCA9685 at 0x42 — no conflict)
 """
 
 import os
 import json
 
-LIGHTS_CONFIG_PATH = os.path.join('configs', 'lights_config.json')
+LIGHTS_CONFIG_PATH = os.path.join(os.path.dirname(__file__), '..', '..', 'configs', 'lights_config.json')
 
 DEFAULT_CONFIG = {
-    'port': '/dev/ttyUSB1',
-    'baud': 9600,
+    'i2c_bus': 1,
+    'i2c_address': 0x0A,
     'enabled': True,
 }
 
 _config: dict = {}
-_ser = None
+_bus = None
 
 
 def load_config() -> dict:
@@ -37,41 +42,44 @@ def load_config() -> dict:
 
 def save_config(config: dict):
     global _config
-    os.makedirs('configs', exist_ok=True)
+    os.makedirs(os.path.dirname(LIGHTS_CONFIG_PATH), exist_ok=True)
     with open(LIGHTS_CONFIG_PATH, 'w') as f:
         json.dump(config, f, indent=2)
     _config = config
+    global _bus
+    _bus = None  # re-open on next send in case bus number changed
 
 
-def _get_serial():
-    global _ser, _config
+def _get_bus():
+    global _bus, _config
     if not _config:
         load_config()
     if not _config.get('enabled', True):
         return None
     try:
-        import serial
-        if _ser is None or not _ser.is_open:
-            _ser = serial.Serial(_config['port'], _config.get('baud', 9600), timeout=1)
-        return _ser
+        import smbus2
+        if _bus is None:
+            _bus = smbus2.SMBus(_config.get('i2c_bus', 1))
+        return _bus
     except Exception as e:
-        print(f'[LIGHTS] Serial unavailable ({_config.get("port")}): {e}')
+        print(f'[LIGHTS] I2C unavailable (bus {_config.get("i2c_bus", 1)}): {e}')
         return None
 
 
 def send_command(cmd: str) -> dict:
-    """Send a raw command string to the AstroPixels board."""
-    global _ser
-    ser = _get_serial()
-    if ser is None:
+    """Send a raw ASCII command string to the AstroPixels board over I2C."""
+    bus = _get_bus()
+    if bus is None:
         print(f'[LIGHTS MOCK] {cmd}')
         return {'ok': True, 'mock': True, 'command': cmd}
     try:
-        ser.write((cmd + '\r').encode())
+        address = _config.get('i2c_address', 0x0A)
+        bus.write_bytes(address, cmd.encode('ascii'))
         return {'ok': True, 'command': cmd}
     except Exception as e:
-        print(f'[LIGHTS] Send error: {e}')
-        _ser = None  # reset so next call retries
+        print(f'[LIGHTS] I2C send error: {e}')
+        global _bus
+        _bus = None  # reset so next call retries
         return {'ok': False, 'error': str(e), 'command': cmd}
 
 

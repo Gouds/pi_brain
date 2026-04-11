@@ -1706,8 +1706,8 @@ async def arduino_flash():
 # ── Lights (AstroPixels) ──────────────────────────────────────────────────────
 
 class LightsConfig(BaseModel):
-    port: str = '/dev/ttyUSB1'
-    baud: int = 9600
+    i2c_bus: int = 1
+    i2c_address: int = 0x0A
     enabled: bool = True
 
 class LogicCommand(BaseModel):

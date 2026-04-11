@@ -5,4 +5,5 @@
 
 RPi.GPIO
 adafruit-circuitpython-servokit
+smbus2
 pygame
