@@ -32,6 +32,16 @@ export const setVolume = (level) =>
 export const getDomeList = () =>
   fetch(`${_apiUrl}/dome/list`).then(r => r.json())
 
+export const domeSpin = (speed) =>
+  fetch(`${_apiUrl}/dome/spin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ speed }),
+  }).then(r => r.json())
+
+export const domeStop = () =>
+  fetch(`${_apiUrl}/dome/stop`, { method: 'POST' }).then(r => r.json())
+
 // ── Body ──────────────────────────────────────────────────────────────────────
 export const getBodyList = () =>
   fetch(`${_apiUrl}/body/list`).then(r => r.json())

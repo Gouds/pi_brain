@@ -5,8 +5,9 @@ import { useSections } from '../hooks/useSections.js'
 
 const STATIC_TOP = [
   { to: '/',       label: 'Home',  feature: 'home' },
-  { to: '/audio',  label: 'Audio', feature: 'audio' },
-  { to: '/lights', label: 'Lights', feature: 'lights' },
+  { to: '/audio',   label: 'Audio',   feature: 'audio' },
+  { to: '/lights',  label: 'Lights',  feature: 'lights' },
+  { to: '/control', label: 'Control', feature: 'control' },
 ]
 
 const BOTTOM_LINKS = [

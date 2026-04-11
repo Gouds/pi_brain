@@ -162,6 +162,7 @@ const PAGE_TITLES = {
   '/audio-library': 'Audio Library',
   '/simulation': 'Simulation',
   '/script-editor': 'Script Editor',
+  '/control': 'Control',
   '/lights': 'Lights',
   '/lights/advanced': 'Lights — Advanced',
   '/admin/lights-presets': 'Light Presets',

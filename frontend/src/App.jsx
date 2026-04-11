@@ -28,6 +28,7 @@ import ScriptEditor from './pages/ScriptEditor.jsx'
 import Lights from './pages/Lights.jsx'
 import LightsPresets from './pages/LightsPresets.jsx'
 import EditLightsPresets from './pages/admin/EditLightsPresets.jsx'
+import Control from './pages/Control.jsx'
 
 import { ProfileContext } from './context/ProfileContext.js'
 import { useProfile } from './hooks/useProfile.js'
@@ -81,6 +82,7 @@ export default function App() {
                 <Route path="/audio-library" element={<AudioLibrary />} />
                 <Route path="/simulation" element={<Simulation />} />
                 <Route path="/script-editor" element={<ScriptEditor />} />
+                <Route path="/control" element={<Control />} />
                 <Route path="/lights" element={<LightsPresets />} />
                 <Route path="/lights/advanced" element={<Lights />} />
                 <Route path="/admin/lights-presets" element={<EditLightsPresets />} />

@@ -10,7 +10,7 @@ from typing import List, Dict
 import os
 from utils import mainconfig
 from plugins.audio.audio_control import audio_list, audio_play, audio_random_list, audio_random_play, get_volume, set_volume
-from plugins.dome.dome_control import dome_list
+from plugins.dome.dome_control import dome_list, dome_spin as _dome_spin, dome_stop as _dome_stop
 from plugins.body.body_control import body_list
 from plugins.servo.servo_control import i2c_servo_controls, reinit_bus, remove_bus
 from plugins.script.script_control import script_list, script_start_handler, running_scripts, stop_script, stop_all_scripts
@@ -328,6 +328,17 @@ async def close_servo(servo_name: str):
 async def dome_list_handeler():
     dome_servos = [servo for servo in servo_config["servos"] if servo["bus"] == "dome"]
     return dome_servos
+
+class DomeSpinCommand(BaseModel):
+    speed: int = 0  # -100 to 100
+
+@app.post("/dome/spin", tags=["Dome"])
+async def dome_spin_endpoint(cmd: DomeSpinCommand):
+    return _dome_spin(cmd.speed)
+
+@app.post("/dome/stop", tags=["Dome"])
+async def dome_stop_endpoint():
+    return _dome_stop()
 
 
 @app.get("/dome/<servo_name>/<servo_position>/<servo_Duration>", tags=["Dome"])

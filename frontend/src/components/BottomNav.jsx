@@ -87,6 +87,17 @@ function SectionIcon() {
   )
 }
 
+function ControlIcon() {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9"/>
+      <polyline points="8,12 12,8 16,12"/>
+      <line x1="12" y1="8" x2="12" y2="16"/>
+    </svg>
+  )
+}
+
 function SettingsIcon() {
   return (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
@@ -109,6 +120,7 @@ const STATIC_ITEMS = [
   { to: '/audio',   label: 'Audio',   Icon: AudioIcon,   feature: 'audio' },
   { to: '/scripts', label: 'Scripts', Icon: ScriptsIcon, feature: 'scripts' },
   { to: '/lights',  label: 'Lights',  Icon: LightsIcon,  feature: 'lights' },
+  { to: '/control', label: 'Control', Icon: ControlIcon, feature: 'control' },
   { to: '/settings',label: 'Settings',Icon: SettingsIcon },
 ]
 
