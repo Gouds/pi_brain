@@ -15,6 +15,11 @@ export function useProfile() {
   )
   const toggleWideMode = useCallback(() => setWideMode(w => !w), [])
 
+  const [mobileLayout, setMobileLayout] = useState(
+    () => localStorage.getItem('pi-mobile-layout') === 'true'
+  )
+  const toggleMobileLayout = useCallback(() => setMobileLayout(m => !m), [])
+
   useEffect(() => {
     if (wideMode) {
       document.body.setAttribute('data-wide', 'true')
@@ -23,6 +28,10 @@ export function useProfile() {
     }
     localStorage.setItem('pi-wide-mode', String(wideMode))
   }, [wideMode])
+
+  useEffect(() => {
+    localStorage.setItem('pi-mobile-layout', String(mobileLayout))
+  }, [mobileLayout])
 
   const allProfiles = [...BUILTIN_PROFILES, ...userProfiles]
   const activeProfile =
@@ -63,8 +72,8 @@ export function useProfile() {
     }
     styleEl.textContent = css
 
-    // Set layout attribute
-    const layout = activeProfile.layout ?? 'sidebar'
+    // Set layout attribute — mobile override takes precedence over profile layout
+    const layout = mobileLayout ? 'mobile' : (activeProfile.layout ?? 'sidebar')
     document.querySelector('.wrapper')?.setAttribute('data-layout', layout)
     document.body.setAttribute('data-layout', layout)
 
@@ -81,7 +90,7 @@ export function useProfile() {
 
     // Persist active profile ID
     localStorage.setItem('pi-active-profile', activeProfile.id)
-  }, [activeProfile])
+  }, [activeProfile, mobileLayout])
 
   const activateProfile = useCallback((id) => {
     setActiveProfileId(id)
@@ -96,5 +105,7 @@ export function useProfile() {
     refreshUserProfiles,
     wideMode,
     toggleWideMode,
+    mobileLayout,
+    toggleMobileLayout,
   }
 }

@@ -9,4 +9,6 @@ export const ProfileContext = createContext({
   refreshUserProfiles: () => Promise.resolve(),
   wideMode: false,
   toggleWideMode: () => {},
+  mobileLayout: false,
+  toggleMobileLayout: () => {},
 })
