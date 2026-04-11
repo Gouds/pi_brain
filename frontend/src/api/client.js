@@ -311,6 +311,26 @@ export const adminDeleteSection = (index) =>
   fetch(`${_apiUrl}/admin/sections/${index}`, { method: 'DELETE' }).then(r => r.json())
 
 // ── Lights (AstroPixels) ─────────────────────────────────────────────────────
+export const lightsGetPresets = () =>
+  fetch(`${_apiUrl}/lights/presets`).then(r => r.json())
+
+export const lightsAddPreset = (preset) =>
+  fetch(`${_apiUrl}/lights/presets`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(preset),
+  }).then(r => r.json())
+
+export const lightsUpdatePreset = (index, preset) =>
+  fetch(`${_apiUrl}/lights/presets/${index}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(preset),
+  }).then(r => r.json())
+
+export const lightsDeletePreset = (index) =>
+  fetch(`${_apiUrl}/lights/presets/${index}`, { method: 'DELETE' }).then(r => r.json())
+
 export const lightsGetConfig = () =>
   fetch(`${_apiUrl}/lights/config`).then(r => r.json())
 

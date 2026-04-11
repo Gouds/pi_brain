@@ -1726,6 +1726,67 @@ class HoloCommand(BaseModel):
 class RawLightsCommand(BaseModel):
     command: str
 
+class LightCommandStep(BaseModel):
+    type: str                  # 'logic' | 'holo' | 'raw'
+    params: dict = {}
+    command: str = ''
+
+class LightPreset(BaseModel):
+    label: str
+    colour: str = '#666'
+    commands: list[LightCommandStep] = []
+
+_LIGHTS_PRESETS_PATH = os.path.join(os.path.dirname(__file__), "configs", "lights_presets.json")
+
+_DEFAULT_PRESETS = [
+    {"label": "Normal",     "colour": "#666",    "commands": [{"type":"logic","params":{"target":"0","effect":0,"colour":0,"speed":0,"duration":0}},{"type":"holo","params":{"target":"A","sequence":1,"colour":5,"duration":0}}]},
+    {"label": "Leia",       "colour": "#4ade80", "commands": [{"type":"logic","params":{"target":"0","effect":3,"colour":0,"speed":0,"duration":0}},{"type":"holo","params":{"target":"A","sequence":1,"colour":5,"duration":0}}]},
+    {"label": "Alarm",      "colour": "#ef4444", "commands": [{"type":"logic","params":{"target":"0","effect":1,"colour":1,"speed":2,"duration":0}}]},
+    {"label": "Rainbow",    "colour": "#a855f7", "commands": [{"type":"logic","params":{"target":"0","effect":10,"colour":0,"speed":3,"duration":0}},{"type":"holo","params":{"target":"A","sequence":6,"colour":0,"duration":0}}]},
+    {"label": "Fire",       "colour": "#f97316", "commands": [{"type":"logic","params":{"target":"0","effect":22,"colour":1,"speed":2,"duration":0}}]},
+    {"label": "Lights Out", "colour": "#374151", "commands": [{"type":"logic","params":{"target":"0","effect":14,"colour":0,"speed":0,"duration":0}}]},
+]
+
+def _load_light_presets():
+    if os.path.exists(_LIGHTS_PRESETS_PATH):
+        with open(_LIGHTS_PRESETS_PATH) as f:
+            return json.load(f)
+    return _DEFAULT_PRESETS
+
+def _save_light_presets(presets):
+    os.makedirs(os.path.dirname(_LIGHTS_PRESETS_PATH), exist_ok=True)
+    with open(_LIGHTS_PRESETS_PATH, "w") as f:
+        json.dump(presets, f, indent=2)
+
+@app.get("/lights/presets", tags=["Lights"])
+async def lights_get_presets():
+    return _load_light_presets()
+
+@app.post("/lights/presets", tags=["Lights"])
+async def lights_add_preset(preset: LightPreset):
+    presets = _load_light_presets()
+    presets.append(preset.model_dump())
+    _save_light_presets(presets)
+    return presets
+
+@app.put("/lights/presets/{index}", tags=["Lights"])
+async def lights_update_preset(index: int, preset: LightPreset):
+    presets = _load_light_presets()
+    if index < 0 or index >= len(presets):
+        raise HTTPException(status_code=404, detail="Preset not found")
+    presets[index] = preset.model_dump()
+    _save_light_presets(presets)
+    return presets
+
+@app.delete("/lights/presets/{index}", tags=["Lights"])
+async def lights_delete_preset(index: int):
+    presets = _load_light_presets()
+    if index < 0 or index >= len(presets):
+        raise HTTPException(status_code=404, detail="Preset not found")
+    presets.pop(index)
+    _save_light_presets(presets)
+    return presets
+
 @app.get("/lights/config", tags=["Lights"])
 async def lights_get_config():
     return _load_lights_config()

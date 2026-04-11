@@ -163,6 +163,8 @@ const PAGE_TITLES = {
   '/simulation': 'Simulation',
   '/script-editor': 'Script Editor',
   '/lights': 'Lights',
+  '/lights/advanced': 'Lights — Advanced',
+  '/admin/lights-presets': 'Light Presets',
 }
 
 export default function Header({ onMenuToggle, onVolumeOpen }) {

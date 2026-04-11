@@ -11,6 +11,7 @@ export default function Admin() {
         <li><Link to="/admin/connection">Connection</Link></li>
         <li><Link to="/admin/controller">Controller Config</Link></li>
         <li><Link to="/admin/arduino">Arduino Config</Link></li>
+        <li><Link to="/admin/lights-presets">Light Presets</Link></li>
       </ul>
     </div>
   )
