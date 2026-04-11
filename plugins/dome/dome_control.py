@@ -16,23 +16,26 @@ PWM duty cycle (0–100) controls speed.
 Falls back to mock (console print) when RPi.GPIO is unavailable.
 """
 
-PWM_PIN = 7   # BOARD
-IN1_PIN = 11  # BOARD
-IN2_PIN = 12  # BOARD
+# BCM GPIO numbers (physical BOARD pins 7/11/12 → BCM 4/17/18)
+PWM_PIN = 4   # BCM (physical pin 7)
+IN1_PIN = 17  # BCM (physical pin 11)
+IN2_PIN = 18  # BCM (physical pin 12)
 PWM_FREQ = 1000  # Hz
 
 _pwm = None
 _gpio = None
 _mock = False
+_init_done = False  # prevents retrying on every call after a failed init
 
 
 def _init():
-    global _pwm, _gpio, _mock
-    if _gpio is not None:
+    global _pwm, _gpio, _mock, _init_done
+    if _init_done:
         return
+    _init_done = True
     try:
         import RPi.GPIO as GPIO
-        GPIO.setmode(GPIO.BOARD)
+        # BCM mode is already set by app.py — do not call setmode again
         GPIO.setwarnings(False)
         GPIO.setup(PWM_PIN, GPIO.OUT)
         GPIO.setup(IN1_PIN, GPIO.OUT)
@@ -43,7 +46,7 @@ def _init():
         _pwm.start(0)
         _gpio = GPIO
         _mock = False
-        print('[DOME] GPIO initialised')
+        print('[DOME] GPIO initialised (BCM mode)')
     except Exception as e:
         print(f'[DOME] GPIO unavailable, using mock: {e}')
         _mock = True
