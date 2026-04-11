@@ -679,7 +679,7 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),
+                    servo.get("position", servo["close_position"]),  # assume closed if unknown
                     servo["open_position"],
                     servo.get("speed", 100),
                 )
@@ -694,7 +694,7 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),
+                    servo.get("position", servo["open_position"]),  # assume open if unknown
                     servo["close_position"],
                     servo.get("speed", 100),
                 )
@@ -708,7 +708,7 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),
+                    servo.get("position", servo["close_position"]),  # assume closed if unknown
                     servo["open_position"],
                     servo.get("speed", 100),
                 )
@@ -722,7 +722,7 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),
+                    servo.get("position", servo["open_position"]),  # assume open if unknown
                     servo["close_position"],
                     servo.get("speed", 100),
                 )
@@ -1513,7 +1513,7 @@ async def profile_servo_open(profile_id: str, servo_name: str):
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),
+                    servo.get("position", servo["close_position"]),  # assume closed if unknown
                     servo["open_position"],
                     servo.get("speed", 100),
                 )
@@ -1531,7 +1531,7 @@ async def profile_servo_close(profile_id: str, servo_name: str):
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),
+                    servo.get("position", servo["open_position"]),  # assume open if unknown
                     servo["close_position"],
                     servo.get("speed", 100),
                 )
@@ -1551,7 +1551,7 @@ async def profile_servo_move(profile_id: str, servo_name: str, angle: int):
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", angle),
+                    servo.get("position", servo.get("default_position", 90)),  # use stored or default
                     angle,
                     servo.get("speed", 100),
                 )
