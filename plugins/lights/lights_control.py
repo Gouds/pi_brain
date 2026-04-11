@@ -106,7 +106,11 @@ def build_logic_command(target: str, effect: int, colour: int, speed: int, durat
     """
     effect_str = str(int(effect)).zfill(2)
     time_str   = str(min(int(duration), 99)).zfill(2)
-    return f"LE{target}{effect_str}{int(colour)}{int(speed)}{time_str}"
+    # The AstroPixels docs require leading zeros to be dropped from the full
+    # numeric string. e.g. target=0,effect=14 → "0140000" → strip → "140000"
+    # atoi("140000") still gives target=0 (0/1000000=0), effect=14.
+    full = f"{target}{effect_str}{int(colour)}{int(speed)}{time_str}"
+    return f"LE{full.lstrip('0') or '0'}"
 
 
 def build_holo_command(target: str, sequence: int, colour: int, duration: int) -> str:

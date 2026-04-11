@@ -123,7 +123,6 @@ const PRESETS = [
     colour: '#374151',
     commands: [
       { type: 'logic', params: { target: '0', effect: 14, colour: 0, speed: 0, duration: 0 } },
-      { type: 'raw',   command: 'HP A clear' },
     ],
   },
 ]
