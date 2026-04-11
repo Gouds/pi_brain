@@ -92,6 +92,61 @@
 }
 
 /* =====================
+   MOBILE LAYOUT
+   Full-viewport fluid layout for phone browsers.
+   Uses bottom nav, no sidebar, fluid widths.
+   ===================== */
+
+[data-layout="mobile"] .wrapper {
+    width: 100%;
+    height: 100dvh;
+    outline: none;
+    display: flex;
+    flex-direction: column;
+}
+
+[data-layout="mobile"] header {
+    width: 100%;
+    height: 52px;
+    flex-shrink: 0;
+}
+
+[data-layout="mobile"] header h1 {
+    line-height: 52px;
+    font-size: 1.2rem;
+}
+
+[data-layout="mobile"] .contentwrapper {
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+[data-layout="mobile"] .footer {
+    display: none;
+}
+
+[data-layout="mobile"] .header-menu-toggle {
+    display: none;
+}
+
+[data-layout="mobile"] .bottom-nav {
+    width: 100%;
+    height: 56px;
+    flex-shrink: 0;
+}
+
+[data-layout="mobile"] .bottom-nav a {
+    font-size: 10px;
+    gap: 3px;
+}
+
+[data-layout="mobile"] .content {
+    padding: 0.5rem;
+    font-size: 14px;
+}
+
+/* =====================
    RESET / BASE
    ===================== */
 

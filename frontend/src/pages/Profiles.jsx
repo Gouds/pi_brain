@@ -44,7 +44,7 @@ function validateImport(data) {
   if (!data || typeof data !== 'object') return 'Invalid JSON object'
   if (!data.id || !/^[a-z0-9-]+$/.test(data.id)) return 'Missing or invalid id (must be lowercase slug)'
   if (!data.label) return 'Missing label'
-  if (!['sidebar', 'touch'].includes(data.layout)) return 'layout must be "sidebar" or "touch"'
+  if (!['sidebar', 'touch', 'mobile'].includes(data.layout)) return 'layout must be "sidebar", "touch", or "mobile"'
   if (!data.colors || typeof data.colors !== 'object') return 'Missing colors object'
   for (const key of REQUIRED_COLOR_KEYS) {
     if (!(key in data.colors)) return `Missing color key: ${key}`
@@ -345,7 +345,7 @@ function RobotForm({ editingProfile, initialStyleId = 'dark', onSave, onCancel }
         <div style={{ marginTop: '0.4rem' }}>
           <div style={{ fontSize: 10, color: 'var(--text-secondary)', marginBottom: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Layout</div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            {['sidebar', 'touch'].map(l => (
+            {['sidebar', 'touch', 'mobile'].map(l => (
               <label key={l} style={{ display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer', color: 'var(--text-secondary)', fontSize: 12 }}>
                 <input type="radio" name="layout" value={l} checked={form.layout === l}
                   onChange={() => setForm(f => ({ ...f, layout: l }))} />

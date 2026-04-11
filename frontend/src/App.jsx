@@ -40,7 +40,7 @@ export default function App() {
   const profileValue = useProfile()
   const { activeProfile } = profileValue
 
-  const isTouch = activeProfile?.layout === 'touch'
+  const isTouch = activeProfile?.layout === 'touch' || activeProfile?.layout === 'mobile'
 
   function toggleMenu() {
     setMenuState(s => {
