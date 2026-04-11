@@ -655,19 +655,22 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         servo_name = action.get("servo", "")
         min_a = int(action.get("min_angle", 0))
         max_a = int(action.get("max_angle", 180))
-        # Map 0-1023 to min_angle-max_angle
         angle = int(min_a + (axis_raw / 1023.0) * (max_a - min_a))
         angle = max(min_a, min(max_a, angle))
         config = _load_profile_servo_config(profile_id)
         for servo in config["servos"]:
             if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                pkey = (profile_id, servo_name)
+                from_angle = _live_positions.get(pkey, servo.get("position", servo.get("default_position", 90)))
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", angle),
+                    from_angle,
                     angle,
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+                _live_positions[pkey] = angle
                 servo["position"] = angle
         _save_profile_servo_config(profile_id, config)
 
@@ -676,13 +679,17 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         config = _load_profile_servo_config(profile_id)
         for servo in config["servos"]:
             if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                pkey = (profile_id, servo_name)
+                from_angle = _live_positions.get(pkey, servo.get("position", servo["close_position"]))
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),  # assume closed if unknown
+                    from_angle,
                     servo["open_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+                _live_positions[pkey] = servo["open_position"]
                 servo["position"] = servo["open_position"]
         _save_profile_servo_config(profile_id, config)
 
@@ -691,13 +698,17 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         config = _load_profile_servo_config(profile_id)
         for servo in config["servos"]:
             if servo["name"] == servo_name and servo["bus"] in i2c_servo_controls:
+                pkey = (profile_id, servo_name)
+                from_angle = _live_positions.get(pkey, servo.get("position", servo["open_position"]))
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),  # assume open if unknown
+                    from_angle,
                     servo["close_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+                _live_positions[pkey] = servo["close_position"]
                 servo["position"] = servo["close_position"]
         _save_profile_servo_config(profile_id, config)
 
@@ -705,13 +716,17 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         config = _load_profile_servo_config(profile_id)
         for servo in config["servos"]:
             if servo["bus"] in i2c_servo_controls:
+                pkey = (profile_id, servo["name"])
+                from_angle = _live_positions.get(pkey, servo.get("position", servo["close_position"]))
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),  # assume closed if unknown
+                    from_angle,
                     servo["open_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+                _live_positions[pkey] = servo["open_position"]
                 servo["position"] = servo["open_position"]
         _save_profile_servo_config(profile_id, config)
 
@@ -719,13 +734,17 @@ async def _dispatch_joystick_action(profile_id: str, action: dict, axis_raw: int
         config = _load_profile_servo_config(profile_id)
         for servo in config["servos"]:
             if servo["bus"] in i2c_servo_controls:
+                pkey = (profile_id, servo["name"])
+                from_angle = _live_positions.get(pkey, servo.get("position", servo["open_position"]))
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),  # assume open if unknown
+                    from_angle,
                     servo["close_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+                _live_positions[pkey] = servo["close_position"]
                 servo["position"] = servo["close_position"]
         _save_profile_servo_config(profile_id, config)
 
@@ -1488,12 +1507,22 @@ async def profile_admin_delete_bus(profile_id: str, index: int):
 # PROFILE-SCOPED SERVO CONTROL
 #######################
 
-async def _move_with_speed(kit, servo_id, from_angle, to_angle, speed=100):
+# In-memory position tracking — updated in real-time during slow moves so
+# concurrent requests see the actual current angle rather than a stale file value.
+# Key: (profile_id, servo_name)  Value: current angle (int)
+_live_positions: dict = {}
+
+async def _move_with_speed(kit, servo_id, from_angle, to_angle, speed=100, position_key=None):
     """Move a servo from from_angle to to_angle at the given speed (1=slow, 100=instant)."""
     from_angle = int(from_angle)
     to_angle = int(to_angle)
-    if speed >= 100 or from_angle == to_angle:
+    if from_angle == to_angle:
+        # Already at target — don't command the servo (avoids snapping on drift)
+        return
+    if speed >= 100:
         kit.servo[servo_id].angle = to_angle
+        if position_key:
+            _live_positions[position_key] = to_angle
         return
     steps = abs(to_angle - from_angle)
     total_time = (100 - speed) * 0.03  # up to ~3 seconds at speed=1
@@ -1501,6 +1530,8 @@ async def _move_with_speed(kit, servo_id, from_angle, to_angle, speed=100):
     direction = 1 if to_angle > from_angle else -1
     for angle in range(from_angle, to_angle + direction, direction):
         kit.servo[servo_id].angle = angle
+        if position_key:
+            _live_positions[position_key] = angle
         await asyncio.sleep(delay)
 
 
@@ -1509,14 +1540,18 @@ async def profile_servo_open(profile_id: str, servo_name: str):
     config = _load_profile_servo_config(profile_id)
     for servo in config["servos"]:
         if servo["name"] == servo_name:
+            pkey = (profile_id, servo_name)
+            from_angle = _live_positions.get(pkey, servo.get("position", servo["close_position"]))
             if servo["bus"] in i2c_servo_controls:
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["close_position"]),  # assume closed if unknown
+                    from_angle,
                     servo["open_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+            _live_positions[pkey] = servo["open_position"]
             servo["position"] = servo["open_position"]
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Opened {servo_name}", "position": servo["open_position"]}
@@ -1527,14 +1562,18 @@ async def profile_servo_close(profile_id: str, servo_name: str):
     config = _load_profile_servo_config(profile_id)
     for servo in config["servos"]:
         if servo["name"] == servo_name:
+            pkey = (profile_id, servo_name)
+            from_angle = _live_positions.get(pkey, servo.get("position", servo["open_position"]))
             if servo["bus"] in i2c_servo_controls:
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo["open_position"]),  # assume open if unknown
+                    from_angle,
                     servo["close_position"],
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+            _live_positions[pkey] = servo["close_position"]
             servo["position"] = servo["close_position"]
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Closed {servo_name}", "position": servo["close_position"]}
@@ -1547,14 +1586,18 @@ async def profile_servo_move(profile_id: str, servo_name: str, angle: int):
     config = _load_profile_servo_config(profile_id)
     for servo in config["servos"]:
         if servo["name"] == servo_name:
+            pkey = (profile_id, servo_name)
+            from_angle = _live_positions.get(pkey, servo.get("position", servo.get("default_position", 90)))
             if servo["bus"] in i2c_servo_controls:
                 await _move_with_speed(
                     i2c_servo_controls[servo["bus"]].kit,
                     servo["id"],
-                    servo.get("position", servo.get("default_position", 90)),  # use stored or default
+                    from_angle,
                     angle,
                     servo.get("speed", 100),
+                    position_key=pkey,
                 )
+            _live_positions[pkey] = angle
             servo["position"] = angle
             _save_profile_servo_config(profile_id, config)
             return {"message": f"Moved {servo_name} to {angle}°", "position": angle}
