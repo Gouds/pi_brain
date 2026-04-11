@@ -1,7 +1,19 @@
 {
     "i2c_buses": [
         {
-            "name": "dome",
+            "name": "body",
+            "address": "0x40",
+            "scl_pin": "SCL",
+            "sda_pin": "SDA"
+        },
+        {
+            "name": "dome 01",
+            "address": "0x41",
+            "scl_pin": "SCL",
+            "sda_pin": "SDA"
+        },
+        {
+            "name": "dome 02",
             "address": "0x42",
             "scl_pin": "SCL",
             "sda_pin": "SDA"
@@ -10,12 +22,47 @@
     "servos": [
         {
             "id": 0,
-            "name": "test",
-            "bus": "dome",
+            "name": "body01",
+            "bus": "body",
             "default_position": 100,
             "open_position": 1,
-            "close_position": 100,
-            "position": 1
+            "close_position": 180,
+            "position": 1,
+            "speed": 100,
+            "group": ""
+        },
+        {
+            "id": 1,
+            "name": "body02",
+            "bus": "body",
+            "default_position": 0,
+            "open_position": 0,
+            "close_position": 180,
+            "position": 0,
+            "speed": 100,
+            "group": ""
+        },
+        {
+            "id": 0,
+            "name": "dome 01",
+            "bus": "dome 01",
+            "default_position": 0,
+            "open_position": 0,
+            "close_position": 180,
+            "position": 0,
+            "speed": 100,
+            "group": ""
+        },
+        {
+            "id": 0,
+            "name": "dome 02",
+            "bus": "dome 02",
+            "default_position": 0,
+            "open_position": 0,
+            "close_position": 180,
+            "position": 0,
+            "speed": 100,
+            "group": ""
         }
     ]
 }
